@@ -16,6 +16,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Google Sheets connection
   await setupGoogleSheetsConnection();
 
+  // Admin middleware to verify if user is an admin
+  const checkAdminAccess = async (req: Request, res: Response, next: Function) => {
+    try {
+      const userId = req.headers['user-id'];
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: No user ID provided" });
+      }
+      
+      const user = await storage.getUser(parseInt(userId as string));
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: "Forbidden: User is not an admin" });
+      }
+      
+      next();
+    } catch (error) {
+      return res.status(500).json({ message: "Failed to verify admin status" });
+    }
+  };
+
   // ==== User Routes ====
   // Register a new user
   app.post("/api/users", async (req: Request, res: Response) => {
@@ -56,6 +81,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+  
+  // Check if user is admin
+  app.get("/api/users/:id/admin", async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ isAdmin: user.isAdmin || false });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check admin status" });
     }
   });
 
@@ -318,8 +359,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // ==== Product Stock Management ====
-  // Create a new product
-  app.post("/api/products", async (req: Request, res: Response) => {
+  // Create a new product (admin only)
+  app.post("/api/products", checkAdminAccess, async (req: Request, res: Response) => {
     try {
       const productInput = insertProductSchema.parse(req.body);
       
@@ -397,8 +438,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Update brand settings
-  app.post("/api/brand-settings", async (req: Request, res: Response) => {
+  // Update brand settings (admin only)
+  app.post("/api/brand-settings", checkAdminAccess, async (req: Request, res: Response) => {
     try {
       const settingsInput = insertBrandSettingsSchema.parse(req.body);
       
@@ -413,9 +454,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // ==== Admin Routes ====
+  // ==== Admin Routes ===
+  
   // Get all users for admin
-  app.get("/api/admin/users", async (_req: Request, res: Response) => {
+  app.get("/api/admin/users", checkAdminAccess, async (_req: Request, res: Response) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -425,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get all orders for admin
-  app.get("/api/admin/orders", async (_req: Request, res: Response) => {
+  app.get("/api/admin/orders", checkAdminAccess, async (_req: Request, res: Response) => {
     try {
       const orders = await storage.getAllOrders();
       

@@ -13,6 +13,7 @@ import AdminDashboard from "@/pages/admin";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import CartModal from "@/components/ui/cart-modal";
+import AdminRoute from "@/components/layout/admin-route";
 
 function Router() {
   return (
@@ -24,7 +25,11 @@ function Router() {
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/products/category/:category" component={Home} />
       <Route path="/receipt/:id" component={Receipt} />
-      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin">
+        <AdminRoute>
+          <AdminDashboard />
+        </AdminRoute>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
