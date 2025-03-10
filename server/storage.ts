@@ -73,6 +73,22 @@ export class MemStorage implements IStorage {
     
     // Initialize default brand settings
     this.initializeBrandSettings();
+    
+    // Initialize a default admin user
+    this.initializeAdminUser();
+  }
+  
+  private async initializeAdminUser() {
+    // Create an admin user if none exists
+    const adminUser: InsertUser = {
+      name: 'Administrador',
+      email: 'admin@example.com',
+      phone: '1234567890',
+      coins: 1000,
+      isAdmin: true
+    };
+    
+    await this.createUser(adminUser);
   }
   
   private async initializeBrandSettings() {
@@ -164,7 +180,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user: User = { ...insertUser, id, coins: insertUser.coins || 100 };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      coins: insertUser.coins || 100,
+      isAdmin: insertUser.isAdmin || false
+    };
     this.users.set(id, user);
     
     // Synchronize with Google Sheets
@@ -188,11 +209,11 @@ export class MemStorage implements IStorage {
     const users = await this.getAllUsers();
     
     // Header row
-    let csv = 'ID,Name,Email,Phone,Coins\n';
+    let csv = 'ID,Name,Email,Phone,Coins,IsAdmin\n';
     
     // Data rows
     for (const user of users) {
-      csv += `${user.id},"${user.name}","${user.email}","${user.phone}",${user.coins}\n`;
+      csv += `${user.id},"${user.name}","${user.email}","${user.phone}",${user.coins},${user.isAdmin}\n`;
     }
     
     return csv;

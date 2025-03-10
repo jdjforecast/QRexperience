@@ -20,6 +20,7 @@ export type User = {
   email: string;
   phone: string;
   coins: number;
+  isAdmin: boolean;
 };
 
 export type Product = {
