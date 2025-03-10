@@ -48,15 +48,16 @@ export default function AdminTools() {
   // Efecto para actualizar los estados cuando se cargan los datos
   useEffect(() => {
     if (brandData) {
-      setBrandSettings(brandData);
-      setLogoUrl(brandData.logoUrl || "");
-      setWelcomeImageUrl(brandData.welcomeImageUrl || "");
-      setPrimaryColor(brandData.primaryColor || "#3b82f6");
-      setSecondaryColor(brandData.secondaryColor || "#10b981");
-      setLanguage(brandData.language || "es");
-      setFontFamily(brandData.fontFamily || "Inter");
-      setBorderRadius(brandData.borderRadius || "0.5rem");
-      setEnableAnimations(brandData.enableAnimations !== undefined ? brandData.enableAnimations : true);
+      const typedData = brandData as BrandSettings;
+      setBrandSettings(typedData);
+      setLogoUrl(typedData.logoUrl || "");
+      setWelcomeImageUrl(typedData.welcomeImageUrl || "");
+      setPrimaryColor(typedData.primaryColor || "#3b82f6");
+      setSecondaryColor(typedData.secondaryColor || "#10b981");
+      setLanguage(typedData.language || "es");
+      setFontFamily(typedData.fontFamily || "Inter");
+      setBorderRadius(typedData.borderRadius || "0.5rem");
+      setEnableAnimations(typedData.enableAnimations !== undefined ? typedData.enableAnimations : true);
     }
   }, [brandData]);
   
@@ -82,7 +83,8 @@ export default function AdminTools() {
       return res.json();
     },
     onSuccess: (data) => {
-      setBrandSettings(data);
+      const typedData = data as BrandSettings;
+      setBrandSettings(typedData);
       toast({
         title: "Configuración guardada",
         description: "La personalización de marca ha sido actualizada correctamente.",
@@ -168,28 +170,103 @@ export default function AdminTools() {
     }
   });
 
-  // Simulación de mutación para exportar datos
-  const exportDataMutation = useMutation({
+  // Mutación para exportar datos de usuarios
+  const exportUsersCSVMutation = useMutation({
     mutationFn: async () => {
-      // En una implementación real, esto enviaría una solicitud al servidor
-      // para exportar datos
-      const res = await apiRequest('/api/admin/export-data', {
-        method: 'POST'
+      const res = await apiRequest('/api/export/users', {
+        method: 'GET'
       });
-      return res.json();
+      return res.text();
     },
     onSuccess: (data) => {
-      // En una implementación real, esto iniciaría una descarga del archivo
+      // Crear un blob con el CSV y descargarlo
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'usuarios.csv');
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
       toast({
         title: "Datos exportados",
-        description: "Los datos han sido exportados correctamente.",
+        description: "Se ha descargado el archivo CSV de usuarios.",
       });
-      setIsExportDataOpen(false);
     },
     onError: (error: any) => {
       toast({
-        title: "Error al exportar",
-        description: error.message || "Ocurrió un error al exportar los datos.",
+        title: "Error al exportar usuarios",
+        description: error.message || "Ocurrió un error al exportar los datos de usuarios.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutación para exportar datos de productos
+  const exportProductsCSVMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('/api/export/products', {
+        method: 'GET'
+      });
+      return res.text();
+    },
+    onSuccess: (data) => {
+      // Crear un blob con el CSV y descargarlo
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'productos.csv');
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Datos exportados",
+        description: "Se ha descargado el archivo CSV de productos.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al exportar productos",
+        description: error.message || "Ocurrió un error al exportar los datos de productos.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutación para exportar datos de órdenes
+  const exportOrdersCSVMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('/api/export/orders', {
+        method: 'GET'
+      });
+      return res.text();
+    },
+    onSuccess: (data) => {
+      // Crear un blob con el CSV y descargarlo
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'ordenes.csv');
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Datos exportados",
+        description: "Se ha descargado el archivo CSV de órdenes.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al exportar órdenes",
+        description: error.message || "Ocurrió un error al exportar los datos de órdenes.",
         variant: "destructive",
       });
     }
@@ -676,27 +753,78 @@ export default function AdminTools() {
           <DialogHeader>
             <DialogTitle>Exportar Datos</DialogTitle>
             <DialogDescription>
-              Seleccione el formato para exportar los datos del sistema.
+              Seleccione los datos que desea exportar en formato CSV.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full">
-                Exportar como CSV
+            <div className="space-y-3">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => exportUsersCSVMutation.mutate()}
+                disabled={exportUsersCSVMutation.isPending}
+              >
+                {exportUsersCSVMutation.isPending ? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Exportando usuarios...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    Exportar Usuarios
+                  </>
+                )}
               </Button>
-              <Button variant="outline" className="w-full">
-                Exportar como JSON
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => exportProductsCSVMutation.mutate()}
+                disabled={exportProductsCSVMutation.isPending}
+              >
+                {exportProductsCSVMutation.isPending ? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Exportando productos...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    Exportar Productos
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => exportOrdersCSVMutation.mutate()}
+                disabled={exportOrdersCSVMutation.isPending}
+              >
+                {exportOrdersCSVMutation.isPending ? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Exportando órdenes...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="mr-2 h-4 w-4" />
+                    Exportar Órdenes
+                  </>
+                )}
               </Button>
             </div>
+            
             <p className="text-sm text-gray-600">
-              Los datos exportados incluirán información de usuarios, productos y órdenes.
+              Los archivos CSV pueden ser importados en Excel, Google Sheets u otras hojas de cálculo.
             </p>
           </div>
           <DialogFooter>
             <Button 
               onClick={() => setIsExportDataOpen(false)}
             >
-              Cancelar
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

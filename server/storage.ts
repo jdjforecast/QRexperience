@@ -337,9 +337,21 @@ export class MemStorage implements IStorage {
   async createOrUpdateBrandSettings(settings: InsertBrandSettings): Promise<BrandSettings> {
     const existingSettings = await this.getBrandSettings();
     
+    // Ensure all required fields have values
+    const processedSettings = {
+      logoUrl: settings.logoUrl || "https://cdn-icons-png.flaticon.com/512/5234/5234876.png",
+      welcomeImageUrl: settings.welcomeImageUrl || "https://cdn-icons-png.flaticon.com/512/2331/2331966.png",
+      primaryColor: settings.primaryColor || "#3b82f6",
+      secondaryColor: settings.secondaryColor || "#10b981",
+      language: settings.language || "es",
+      fontFamily: settings.fontFamily || "Inter",
+      borderRadius: settings.borderRadius || "0.5rem",
+      enableAnimations: settings.enableAnimations !== undefined ? settings.enableAnimations : true
+    };
+    
     if (existingSettings) {
       // Update existing settings
-      const updatedSettings: BrandSettings = { ...existingSettings, ...settings };
+      const updatedSettings: BrandSettings = { ...existingSettings, ...processedSettings };
       this.brandSettings.set(existingSettings.id, updatedSettings);
       
       // Synchronize with Google Sheets
@@ -348,7 +360,10 @@ export class MemStorage implements IStorage {
     } else {
       // Create new settings
       const id = this.brandSettingsId++;
-      const newSettings: BrandSettings = { ...settings, id };
+      const newSettings: BrandSettings = { 
+        id, 
+        ...processedSettings
+      };
       this.brandSettings.set(id, newSettings);
       
       // Synchronize with Google Sheets
