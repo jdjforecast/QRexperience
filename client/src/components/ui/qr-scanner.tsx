@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface QRScannerProps {
   onScan: (qrCode: string) => void;
@@ -19,19 +19,32 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
     // Initialize the scanner when the component mounts
     const scannerElement = document.getElementById(scannerContainerId);
     if (scannerElement) {
-      scannerRef.current = new Html5Qrcode(scannerContainerId);
+      try {
+        if (!scannerRef.current) {
+          scannerRef.current = new Html5Qrcode(scannerContainerId);
+          console.log("QR scanner initialized successfully");
+        }
+      } catch (error) {
+        console.error("Error initializing QR scanner:", error);
+        setError("Error al inicializar el escáner de QR. Inténtelo de nuevo.");
+      }
     }
     
     // Clean up on unmount
     return () => {
       if (scannerRef.current) {
-        if (scannerRef.current.isScanning) {
-          scannerRef.current.stop()
-            .catch(err => console.error("Error stopping scanner:", err))
-            .finally(() => {
-              scannerRef.current = null;
-            });
-        } else {
+        try {
+          if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+            scannerRef.current.stop()
+              .catch(err => console.error("Error stopping scanner:", err))
+              .finally(() => {
+                scannerRef.current = null;
+              });
+          } else {
+            scannerRef.current = null;
+          }
+        } catch (error) {
+          console.error("Error during scanner cleanup:", error);
           scannerRef.current = null;
         }
       }
@@ -39,7 +52,10 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   }, []);
   
   const startScanning = async () => {
-    // Primero verificamos si el elemento existe en el DOM
+    // Limpiamos el error previo al intentar iniciar
+    setError(null);
+
+    // Verificamos si el elemento existe en el DOM
     const scannerElement = document.getElementById(scannerContainerId);
     if (!scannerElement) {
       const errorMessage = "No se pudo encontrar el elemento del escáner";
@@ -48,62 +64,105 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
       return;
     }
     
-    // Verificamos si el scanner ya está inicializado o necesita ser reinicializado
-    if (!scannerRef.current) {
+    // Si ya está escaneando, primero paramos el escaneo
+    if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
       try {
-        scannerRef.current = new Html5Qrcode(scannerContainerId);
-      } catch (err) {
-        const errorMessage = (err as Error).message || "Error al inicializar el escáner";
-        setError(errorMessage);
-        onError(errorMessage);
-        return;
+        await scannerRef.current.stop();
+        console.log("Escáner detenido antes de reiniciar");
+      } catch (error) {
+        console.error("Error al detener el escáner:", error);
       }
+    }
+
+    // Reinicializamos el scanner
+    try {
+      if (!scannerRef.current) {
+        console.log("Inicializando scanner");
+        scannerRef.current = new Html5Qrcode(scannerContainerId);
+      }
+    } catch (error) {
+      console.error("Error al reinicializar el escáner:", error);
+      const errorMessage = (error as Error).message || "Error al inicializar el escáner";
+      setError(errorMessage);
+      onError(errorMessage);
+      return;
     }
     
     // Verificamos que el scanner esté listo
-    if (!scannerRef.current) return;
+    if (!scannerRef.current) {
+      setError("No se pudo inicializar el escáner");
+      onError("No se pudo inicializar el escáner");
+      return;
+    }
     
-    setError(null);
+    // Indicamos que estamos escaneando
     setIsScanning(true);
     
     try {
+      // Configuramos opciones para dispositivos móviles
+      const cameraConfig = {
+        facingMode: "environment", // Usar cámara trasera primero
+      };
+      
+      const scanConfig = {
+        fps: 5, // Reducimos a 5 fps para mejorar el rendimiento en móviles
+        qrbox: { width: 200, height: 200 },
+        aspectRatio: 1.0,
+        disableFlip: false, // Permite escanear QR en cualquier orientación
+        formatsToSupport: [0] // Solo QR codes (0 = QR_CODE)
+      };
+      
+      console.log("Iniciando escaneo con configuración:", scanConfig);
+      
       await scannerRef.current.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
-        },
+        cameraConfig,
+        scanConfig,
         (decodedText) => {
-          // On successful scan
+          // En caso de escaneo exitoso
+          console.log("QR detectado:", decodedText);
           setScanSuccess(true);
+          
+          // Detenemos el escáner y notificamos
           setTimeout(() => {
             stopScanning();
             onScan(decodedText);
           }, 1000);
         },
         (errorMessage) => {
-          // QR code not found, continue scanning
-          console.log(errorMessage);
+          // QR code no encontrado, continuamos escaneando
+          // No mostramos estos errores al usuario
+          console.debug("Buscando QR:", errorMessage);
         }
       );
-    } catch (err) {
+      
+      console.log("Escáner iniciado correctamente");
+    } catch (error) {
+      console.error("Error al iniciar el escáner:", error);
       stopScanning();
-      const errorMessage = (err as Error).message || "Error al iniciar el escáner";
+      const errorMessage = (error as Error).message || "Error al iniciar el escáner";
       setError(errorMessage);
       onError(errorMessage);
     }
   };
   
   const stopScanning = async () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      try {
-        await scannerRef.current.stop();
-      } catch (err) {
-        console.error("Error stopping scanner:", err);
-      }
-    }
     setIsScanning(false);
+    
+    if (!scannerRef.current) return;
+    
+    try {
+      // Verificamos si está escaneando antes de detener
+      if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+        console.log("Deteniendo escáner...");
+        await scannerRef.current.stop();
+        console.log("Escáner detenido correctamente");
+      } else {
+        console.log("El escáner ya estaba detenido");
+      }
+    } catch (error) {
+      console.error("Error al detener el escáner:", error);
+      // No mostramos este error al usuario, solo lo registramos
+    }
   };
   
   const simulateScan = (qrCode: string) => {
