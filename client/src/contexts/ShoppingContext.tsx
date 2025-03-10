@@ -53,6 +53,20 @@ export type OrderItem = {
   product?: Product;
 };
 
+export type BrandSettings = {
+  id: number;
+  logoUrl: string;
+  primaryColor: string;
+  secondaryColor: string;
+  storeName: string;
+  storeDescription: string;
+  welcomeImageUrl: string;
+  language: string;
+  fontFamily: string;
+  borderRadius: string;
+  enableAnimations: boolean;
+};
+
 type ShoppingContextType = {
   user: User | null;
   products: Product[];
