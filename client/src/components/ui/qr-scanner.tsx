@@ -16,11 +16,26 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   const scannerContainerId = "qr-scanner-container";
   
   useEffect(() => {
+    // Limpiar cualquier instancia anterior que pueda existir en el DOM
+    try {
+      const existingElements = document.querySelectorAll(`#${scannerContainerId} video, #${scannerContainerId} canvas`);
+      existingElements.forEach(element => {
+        try {
+          element.parentNode?.removeChild(element);
+        } catch (e) {
+          console.log("Elemento ya removido o no existe:", e);
+        }
+      });
+    } catch (e) {
+      console.log("Error limpiando elementos existentes:", e);
+    }
+    
     // Initialize the scanner when the component mounts
     const scannerElement = document.getElementById(scannerContainerId);
     if (scannerElement) {
       try {
         if (!scannerRef.current) {
+          console.log("Inicializando escáner de QR...");
           scannerRef.current = new Html5Qrcode(scannerContainerId);
           console.log("QR scanner initialized successfully");
         }
@@ -35,6 +50,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
       if (scannerRef.current) {
         try {
           if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+            console.log("Limpiando escáner al desmontar...");
             scannerRef.current.stop()
               .catch(err => console.error("Error stopping scanner:", err))
               .finally(() => {

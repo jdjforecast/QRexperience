@@ -4,14 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
-import ProductCard from "@/components/product-card";
-import ProductCategoryCard from "@/components/product-category-card";
+import LiveCart from "@/components/live-cart";
 import { useShopping } from "@/contexts/ShoppingContext";
-import { categories } from "@shared/schema";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
-  const { user, products, setSelectedProduct } = useShopping();
+  const { user, setSelectedProduct } = useShopping();
   
   // If not logged in, redirect to welcome page
   useEffect(() => {
@@ -22,10 +20,6 @@ export default function Home() {
   
   const handleOpenScanner = () => {
     setLocation("/scanner");
-  };
-  
-  const handleViewProductDetails = (product: any) => {
-    setSelectedProduct(product);
   };
   
   if (!user) return null;
@@ -41,10 +35,10 @@ export default function Home() {
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               ¡Bienvenido, {user.name.split(' ')[0]}!
             </h2>
-            <p className="text-gray-600">
-              Tienes <span className="font-semibold text-primary">{user.coins}</span> monedas disponibles
-            </p>
           </div>
+          
+          {/* Live Cart */}
+          <LiveCart />
           
           {/* Scanner option */}
           <Card className="mb-6">
@@ -57,7 +51,7 @@ export default function Home() {
                 />
                 <h3 className="text-xl font-semibold text-gray-800 mb-3">Escanear Producto</h3>
                 <p className="text-gray-600 mb-4">
-                  Utiliza la cámara de tu dispositivo para escanear el código QR del producto que deseas ver.
+                  Utiliza la cámara de tu dispositivo para escanear el código QR del producto que deseas comprar.
                 </p>
                 <Button 
                   onClick={handleOpenScanner}
@@ -70,31 +64,41 @@ export default function Home() {
             </CardContent>
           </Card>
           
-          {/* Product Categories */}
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Categorías de Productos</h3>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            {categories.map((category) => (
-              <ProductCategoryCard key={category} category={category} />
-            ))}
-          </div>
-          
-          {/* Featured Products */}
-          {products.length > 0 && (
-            <>
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Productos Destacados</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {products.slice(0, 3).map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onViewDetails={handleViewProductDetails}
-                  />
-                ))}
+          {/* Ayuda/Instrucciones */}
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Cómo funciona</h3>
+              <div className="space-y-4">
+                <div className="flex gap-4 items-start">
+                  <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <span>1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">Escanea productos</h4>
+                    <p className="text-gray-600 text-sm">Usa el escáner para agregar productos a tu carrito virtual</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <span>2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">Revisa tu carrito</h4>
+                    <p className="text-gray-600 text-sm">Verifica los productos agregados y el total a pagar</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="bg-primary/10 text-primary rounded-full h-8 w-8 flex items-center justify-center flex-shrink-0">
+                    <span>3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800">Finaliza tu compra</h4>
+                    <p className="text-gray-600 text-sm">Completa la transacción y recibe tu recibo digital</p>
+                  </div>
+                </div>
               </div>
-            </>
-          )}
+            </CardContent>
+          </Card>
         </div>
       </main>
       
