@@ -1,19 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
 import QRScanner from "@/components/ui/qr-scanner";
 import { useShopping } from "@/contexts/ShoppingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Scanner() {
   const [location, setLocation] = useLocation();
   const { scanQRCode, setSelectedProduct } = useShopping();
+  const { t } = useLanguage();
   const { toast } = useToast();
   
   const [scanning, setScanning] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  // Este efecto se ejecuta al montar el componente
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      setMounted(false);
+    };
+  }, []);
   
   const handleScan = async (qrCode: string) => {
+    if (!mounted) return;
+    
     try {
       const product = await scanQRCode(qrCode);
       if (product) {
@@ -22,16 +35,18 @@ export default function Scanner() {
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "No se pudo encontrar un producto con este código QR.",
+        title: t("scanner.error"),
+        description: t("scanner.product.not.found"),
         variant: "destructive",
       });
     }
   };
   
   const handleScanError = (error: string) => {
+    if (!mounted) return;
+    
     toast({
-      title: "Error de escaneo",
+      title: t("scanner.error.title"),
       description: error,
       variant: "destructive",
     });

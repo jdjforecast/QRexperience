@@ -16,18 +16,51 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   const scannerContainerId = "qr-scanner-container";
   
   useEffect(() => {
-    // Initialize the scanner
-    scannerRef.current = new Html5Qrcode(scannerContainerId);
+    // Initialize the scanner when the component mounts
+    const scannerElement = document.getElementById(scannerContainerId);
+    if (scannerElement) {
+      scannerRef.current = new Html5Qrcode(scannerContainerId);
+    }
     
     // Clean up on unmount
     return () => {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(console.error);
+      if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          scannerRef.current.stop()
+            .catch(err => console.error("Error stopping scanner:", err))
+            .finally(() => {
+              scannerRef.current = null;
+            });
+        } else {
+          scannerRef.current = null;
+        }
       }
     };
   }, []);
   
   const startScanning = async () => {
+    // Primero verificamos si el elemento existe en el DOM
+    const scannerElement = document.getElementById(scannerContainerId);
+    if (!scannerElement) {
+      const errorMessage = "No se pudo encontrar el elemento del escáner";
+      setError(errorMessage);
+      onError(errorMessage);
+      return;
+    }
+    
+    // Verificamos si el scanner ya está inicializado o necesita ser reinicializado
+    if (!scannerRef.current) {
+      try {
+        scannerRef.current = new Html5Qrcode(scannerContainerId);
+      } catch (err) {
+        const errorMessage = (err as Error).message || "Error al inicializar el escáner";
+        setError(errorMessage);
+        onError(errorMessage);
+        return;
+      }
+    }
+    
+    // Verificamos que el scanner esté listo
     if (!scannerRef.current) return;
     
     setError(null);
@@ -63,7 +96,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   };
   
   const stopScanning = async () => {
-    if (scannerRef.current?.isScanning) {
+    if (scannerRef.current && scannerRef.current.isScanning) {
       try {
         await scannerRef.current.stop();
       } catch (err) {
