@@ -191,6 +191,52 @@ const translations: Translations = {
     en: "Category",
     es: "Categoría"
   },
+  "common.email": {
+    en: "Email",
+    es: "Correo Electrónico"
+  },
+  "common.password": {
+    en: "Password",
+    es: "Contraseña"
+  },
+  "common.login": {
+    en: "Login",
+    es: "Iniciar Sesión"
+  },
+
+  // Admin Login
+  "admin.login": {
+    en: "Admin Access",
+    es: "Acceso de Administrador"
+  },
+  "admin.login.desc": {
+    en: "Enter your credentials to access the admin panel",
+    es: "Ingresa tus credenciales para acceder al panel de administración"
+  },
+  "admin.login.success": {
+    en: "Login Successful",
+    es: "Inicio de Sesión Exitoso"
+  },
+  "admin.login.success.desc": {
+    en: "You have successfully logged in as administrator",
+    es: "Has iniciado sesión exitosamente como administrador"
+  },
+  "admin.login.failed": {
+    en: "Login Failed",
+    es: "Inicio de Sesión Fallido"
+  },
+  "admin.login.failed.desc": {
+    en: "Invalid email or password. Please try again",
+    es: "Correo electrónico o contraseña inválidos. Por favor, intenta de nuevo"
+  },
+  "admin.login.error": {
+    en: "Authentication Error",
+    es: "Error de Autenticación"
+  },
+  "admin.login.error.desc": {
+    en: "There was an error logging in. Please try again",
+    es: "Hubo un error al iniciar sesión. Por favor, intenta de nuevo"
+  },
   
   // Category names
   "category.electronics": {

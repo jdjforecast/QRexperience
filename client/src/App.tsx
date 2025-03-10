@@ -26,6 +26,7 @@ function Router() {
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/products/category/:category" component={Home} />
       <Route path="/receipt/:id" component={Receipt} />
+      <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin">
         <AdminRoute>
           <AdminDashboard />

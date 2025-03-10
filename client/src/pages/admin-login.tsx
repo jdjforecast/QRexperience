@@ -54,16 +54,16 @@ export default function AdminLogin() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            {t("adminLogin")}
+            {t("admin.login")}
           </CardTitle>
           <CardDescription className="text-center">
-            {t("adminLoginDesc")}
+            {t("admin.login.desc")}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">{t("email")}</Label>
+              <Label htmlFor="email">{t("common.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -74,7 +74,7 @@ export default function AdminLogin() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t("password")}</Label>
+              <Label htmlFor="password">{t("common.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -100,7 +100,7 @@ export default function AdminLogin() {
                   {t("loading")}
                 </div>
               ) : (
-                t("login")
+                t("common.login")
               )}
             </Button>
           </CardFooter>
