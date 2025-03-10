@@ -62,6 +62,7 @@ type ShoppingContextType = {
   setSelectedProduct: (product: Product | null) => void;
   lastOrder: Order | null;
   registerUser: (userData: { name: string; email: string; phone: string }) => Promise<void>;
+  adminLogin: () => Promise<void>;
   logout: () => void;
   addToCart: (product: Product) => void;
   removeFromCart: (productId: number) => void;
@@ -174,6 +175,30 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   // Register user function
   const registerUser = async (userData: { name: string; email: string; phone: string }) => {
     await registerMutation.mutateAsync(userData);
+  };
+
+  // Admin login function
+  const adminLogin = async () => {
+    try {
+      // Fetch admin user by email
+      const res = await fetch(`/api/users/admin`);
+      if (!res.ok) {
+        throw new Error("No se pudo autenticar como administrador");
+      }
+      const adminData = await res.json();
+      setUser(adminData);
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Has iniciado sesión como administrador.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error de autenticación",
+        description: "No se pudo iniciar sesión como administrador.",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   // Logout function
@@ -316,6 +341,7 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         setSelectedProduct,
         lastOrder,
         registerUser,
+        adminLogin,
         logout,
         addToCart,
         removeFromCart,

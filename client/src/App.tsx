@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Scanner from "@/pages/scanner";
 import ProductPage from "@/pages/product";
 import Receipt from "@/pages/receipt";
+import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";

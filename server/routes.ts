@@ -100,6 +100,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get admin user for login
+  app.get("/api/users/admin", async (_req: Request, res: Response) => {
+    try {
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      // Find admin user
+      const adminUser = users.find(user => user.isAdmin);
+      
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+      
+      res.json(adminUser);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get admin user" });
+    }
+  });
+
   // Update user coins
   app.patch("/api/users/:id/coins", async (req: Request, res: Response) => {
     try {
