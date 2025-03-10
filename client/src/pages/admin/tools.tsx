@@ -39,6 +39,80 @@ export default function AdminTools() {
   const [fontFamily, setFontFamily] = useState("Inter");
   const [borderRadius, setBorderRadius] = useState("0.5rem");
   const [enableAnimations, setEnableAnimations] = useState(true);
+  
+  // Cargar configuración de marca
+  const { data: brandData, isLoading: isBrandLoading } = useQuery({
+    queryKey: ['/api/brand-settings']
+  });
+  
+  // Efecto para actualizar los estados cuando se cargan los datos
+  useEffect(() => {
+    if (brandData) {
+      setBrandSettings(brandData);
+      setLogoUrl(brandData.logoUrl || "");
+      setWelcomeImageUrl(brandData.welcomeImageUrl || "");
+      setPrimaryColor(brandData.primaryColor || "#3b82f6");
+      setSecondaryColor(brandData.secondaryColor || "#10b981");
+      setLanguage(brandData.language || "es");
+      setFontFamily(brandData.fontFamily || "Inter");
+      setBorderRadius(brandData.borderRadius || "0.5rem");
+      setEnableAnimations(brandData.enableAnimations !== undefined ? brandData.enableAnimations : true);
+    }
+  }, [brandData]);
+  
+  // Guardar configuración de marca
+  const saveBrandSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const updatedSettings = {
+        logoUrl,
+        welcomeImageUrl,
+        primaryColor,
+        secondaryColor,
+        language,
+        fontFamily,
+        borderRadius,
+        enableAnimations
+      };
+      
+      const res = await apiRequest('/api/brand-settings', {
+        method: 'POST',
+        body: JSON.stringify(updatedSettings)
+      });
+      
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setBrandSettings(data);
+      toast({
+        title: "Configuración guardada",
+        description: "La personalización de marca ha sido actualizada correctamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/brand-settings'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al guardar",
+        description: error.message || "Ocurrió un error al guardar la configuración de marca.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Restablecer configuración de marca a valores por defecto
+  const resetBrandSettings = () => {
+    setPrimaryColor("#3b82f6");
+    setSecondaryColor("#10b981");
+    setFontFamily("Inter");
+    setBorderRadius("0.5rem");
+    setEnableAnimations(true);
+    setLanguage("es");
+    // No limpiamos las URLs de imágenes para mantenerlas si ya están configuradas
+    
+    toast({
+      title: "Valores restablecidos",
+      description: "Los valores han sido restablecidos a su configuración predeterminada.",
+    });
+  };
 
   // Simulación de mutación para sincronizar con Google Sheets
   const syncSheetsMutation = useMutation({
@@ -137,8 +211,239 @@ export default function AdminTools() {
         <TabsList className="mb-4">
           <TabsTrigger value="system">Sistema</TabsTrigger>
           <TabsTrigger value="data">Datos</TabsTrigger>
+          <TabsTrigger value="brand">Personalización</TabsTrigger>
           <TabsTrigger value="sync">Sincronización</TabsTrigger>
         </TabsList>
+        
+        {/* Pestaña de Personalización de Marca */}
+        <TabsContent value="brand">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personalización de Marca</CardTitle>
+              <CardDescription>
+                Configure la apariencia y estilo de la aplicación
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                {/* Imágenes y logos */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Imágenes</h3>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="logo-url">URL del logo</Label>
+                      <Input
+                        id="logo-url"
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        placeholder="https://example.com/logo.png"
+                      />
+                      {logoUrl && (
+                        <div className="mt-2 p-2 border rounded-md w-24 h-24 flex items-center justify-center">
+                          <img 
+                            src={logoUrl} 
+                            alt="Logo preview" 
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="welcome-image-url">Imagen de bienvenida</Label>
+                      <Input
+                        id="welcome-image-url"
+                        value={welcomeImageUrl}
+                        onChange={(e) => setWelcomeImageUrl(e.target.value)}
+                        placeholder="https://example.com/welcome.jpg"
+                      />
+                      {welcomeImageUrl && (
+                        <div className="mt-2 p-2 border rounded-md h-32 flex items-center justify-center">
+                          <img 
+                            src={welcomeImageUrl} 
+                            alt="Welcome image preview" 
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Colores y estilo */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Colores y Estilo</h3>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="primary-color">Color Primario</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          id="primary-color"
+                          type="color"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          className="w-12 h-8"
+                        />
+                        <Input
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary-color">Color Secundario</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          id="secondary-color"
+                          type="color"
+                          value={secondaryColor}
+                          onChange={(e) => setSecondaryColor(e.target.value)}
+                          className="w-12 h-8"
+                        />
+                        <Input
+                          value={secondaryColor}
+                          onChange={(e) => setSecondaryColor(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="font-family">Tipo de Fuente</Label>
+                      <Select 
+                        value={fontFamily} 
+                        onValueChange={setFontFamily}
+                      >
+                        <SelectTrigger id="font-family">
+                          <SelectValue placeholder="Seleccione una fuente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Inter">Inter</SelectItem>
+                          <SelectItem value="Roboto">Roboto</SelectItem>
+                          <SelectItem value="Poppins">Poppins</SelectItem>
+                          <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Configuración de idioma y animaciones */}
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Idioma y Región</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Idioma predeterminado</Label>
+                    <Select 
+                      value={language} 
+                      onValueChange={setLanguage}
+                    >
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Seleccione un idioma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="es">Español</SelectItem>
+                        <SelectItem value="en">Inglés</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Animaciones y Efectos</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="enable-animations">Habilitar animaciones</Label>
+                      <Switch
+                        id="enable-animations"
+                        checked={enableAnimations}
+                        onCheckedChange={setEnableAnimations}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="border-radius">Bordes redondeados</Label>
+                      <Slider
+                        id="border-radius"
+                        defaultValue={[0.5]}
+                        max={2}
+                        step={0.1}
+                        value={[parseFloat(borderRadius)]}
+                        onValueChange={(values) => setBorderRadius(`${values[0]}rem`)}
+                        className="py-4"
+                      />
+                      <div className="text-sm text-gray-500 text-right">
+                        {borderRadius}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              {/* Vista previa y acciones */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Vista Previa</h3>
+                <div className="border rounded-md p-4" style={{
+                  fontFamily: fontFamily,
+                  borderRadius: borderRadius,
+                }}>
+                  <div className="flex items-center gap-3 mb-4">
+                    {logoUrl && (
+                      <img 
+                        src={logoUrl} 
+                        alt="Logo" 
+                        className="w-10 h-10 object-contain"
+                      />
+                    )}
+                    <div className="font-semibold" style={{ color: primaryColor }}>
+                      Nombre de la Tienda
+                    </div>
+                  </div>
+                  <div className="flex gap-3 mb-4">
+                    <Button style={{ backgroundColor: primaryColor }}>
+                      Botón Primario
+                    </Button>
+                    <Button variant="outline" style={{ borderColor: secondaryColor, color: secondaryColor }}>
+                      Botón Secundario
+                    </Button>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Esta es una vista previa de cómo se verán los elementos con la configuración actual.
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                onClick={resetBrandSettings}
+              >
+                Restablecer
+              </Button>
+              <Button 
+                onClick={() => saveBrandSettingsMutation.mutate()}
+                disabled={saveBrandSettingsMutation.isPending}
+              >
+                {saveBrandSettingsMutation.isPending ? (
+                  <>
+                    <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  "Guardar Cambios"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
         
         {/* Pestaña de Sistema */}
         <TabsContent value="system">
