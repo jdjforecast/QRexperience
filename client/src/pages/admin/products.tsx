@@ -31,7 +31,7 @@ interface ProductFormData {
 export default function AdminProducts() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<ProductFormData | null>(null);
@@ -124,7 +124,7 @@ export default function AdminProducts() {
   const filteredProducts = products.filter((product: Product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter ? product.category === categoryFilter : true;
+    const matchesCategory = categoryFilter === "all" ? true : product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 

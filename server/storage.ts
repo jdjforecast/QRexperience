@@ -79,16 +79,32 @@ export class MemStorage implements IStorage {
   }
   
   private async initializeAdminUser() {
-    // Create an admin user if none exists
-    const adminUser: InsertUser = {
-      name: 'Administrador',
-      email: 'admin@example.com',
-      phone: '1234567890',
-      coins: 1000,
-      isAdmin: true
-    };
+    // Create admin users if they don't exist
+    const adminUsers: InsertUser[] = [
+      {
+        name: 'Administrador',
+        email: 'admin@example.com',
+        phone: '1234567890',
+        coins: 1000,
+        isAdmin: true
+      },
+      {
+        name: 'Jaime',
+        email: 'jdjfc@hotmail.com',
+        phone: '1234567890',
+        coins: 1000,
+        isAdmin: true
+      }
+    ];
     
-    await this.createUser(adminUser);
+    // Create admin users
+    for (const adminUser of adminUsers) {
+      // Check if user already exists
+      const existingUser = await this.getUserByEmail(adminUser.email);
+      if (!existingUser) {
+        await this.createUser(adminUser);
+      }
+    }
   }
   
   private async initializeBrandSettings() {
