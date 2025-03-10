@@ -1,193 +1,206 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { User } from "@/contexts/ShoppingContext";
 
 export default function AdminUsers() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
-  const [resetCoinsDialog, setResetCoinsDialog] = useState(false);
+  const [isResetCoinsDialogOpen, setIsResetCoinsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [coinsAmount, setCoinsAmount] = useState(1000); // Default coins amount
-  
-  // Fetch users
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['/api/users'],
-    refetchOnWindowFocus: false,
+  const [newCoinsAmount, setNewCoinsAmount] = useState<number>(0);
+
+  // Consulta para obtener usuarios
+  const { data: users = [], isLoading, error } = useQuery<User[]>({
+    queryKey: ['/api/users']
   });
-  
-  // Reset user coins
-  const resetCoins = useMutation({
-    mutationFn: ({ userId, newCoinsAmount }: { userId: number, newCoinsAmount: number }) => {
-      return apiRequest(`/api/users/${userId}/coins`, {
-        method: 'PATCH',
-        body: JSON.stringify({ coins: newCoinsAmount }),
-      });
+
+  // Mutación para actualizar monedas de un usuario
+  const updateCoinsMutation = useMutation({
+    mutationFn: async ({ userId, coins }: { userId: number, coins: number }) => {
+      const res = await apiRequest('PATCH', `/api/users/${userId}/coins`, { coins });
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      setResetCoinsDialog(false);
-      setSelectedUser(null);
+      setIsResetCoinsDialogOpen(false);
       toast({
-        title: "Éxito",
-        description: "Monedas actualizadas correctamente",
+        title: "Monedas actualizadas",
+        description: `Las monedas del usuario han sido actualizadas exitosamente.`,
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "No se pudieron actualizar las monedas",
+        description: error.message || "No se pudieron actualizar las monedas.",
         variant: "destructive",
       });
     }
   });
-  
-  // Filter users based on search term
+
+  // Filtrar usuarios
   const filteredUsers = users.filter((user: User) => {
-    if (!searchTerm) return true;
-    
-    const search = searchTerm.toLowerCase();
     return (
-      user.name.toLowerCase().includes(search) ||
-      user.email.toLowerCase().includes(search) ||
-      user.phone.toLowerCase().includes(search)
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
-  
-  // Handle reset coins
+
+  // Manejar reset de monedas
   const handleResetCoins = (user: User) => {
     setSelectedUser(user);
-    setCoinsAmount(1000); // Default value
-    setResetCoinsDialog(true);
+    setNewCoinsAmount(user.coins);
+    setIsResetCoinsDialogOpen(true);
   };
-  
-  const confirmResetCoins = () => {
-    if (!selectedUser) return;
-    
-    resetCoins.mutate({
-      userId: selectedUser.id,
-      newCoinsAmount: coinsAmount
-    });
+
+  // Manejar envío del formulario de reset de monedas
+  const handleSubmitCoinsReset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser) {
+      updateCoinsMutation.mutate({
+        userId: selectedUser.id,
+        coins: newCoinsAmount
+      });
+    }
   };
-  
+
+  if (isLoading) {
+    return <div className="py-8 text-center">Cargando usuarios...</div>;
+  }
+
+  if (error) {
+    return <div className="py-8 text-center text-red-600">Error al cargar usuarios</div>;
+  }
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
-        <div className="w-72">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
+      </div>
+
+      <Card>
+        <CardHeader className="bg-gray-50">
+          <CardTitle>Búsqueda</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
           <Input
-            placeholder="Buscar usuarios..."
+            placeholder="Buscar por nombre, email o teléfono"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-md"
           />
-        </div>
-      </div>
-      
-      {isLoading ? (
-        <div className="text-center py-10">
-          <p>Cargando usuarios...</p>
-        </div>
-      ) : (
-        <Card>
-          <CardHeader className="bg-gray-50 py-4">
-            <CardTitle className="text-lg">Listado de Usuarios</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Monedas</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="bg-gray-50">
+          <CardTitle>Lista de Usuarios ({filteredUsers.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 text-left">
+                <tr>
+                  <th className="p-4 font-medium">Usuario</th>
+                  <th className="p-4 font-medium">Email</th>
+                  <th className="p-4 font-medium">Teléfono</th>
+                  <th className="p-4 font-medium">Monedas</th>
+                  <th className="p-4 font-medium">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
                 {filteredUsers.map((user: User) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <span className="inline-block w-4 h-4 bg-amber-400 rounded-full"></span>
-                        <span>{user.coins}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="p-4">
+                      <div className="font-medium">{user.name}</div>
+                    </td>
+                    <td className="p-4">{user.email}</td>
+                    <td className="p-4">{user.phone}</td>
+                    <td className="p-4">
+                      <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-50">
+                        {user.coins} monedas
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
                         onClick={() => handleResetCoins(user)}
                       >
-                        Actualizar Monedas
+                        Ajustar Monedas
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-                
                 {filteredUsers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6">
-                      {searchTerm ? "No se encontraron usuarios con ese criterio" : "No hay usuarios registrados"}
-                    </TableCell>
-                  </TableRow>
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-gray-500">
+                      No se encontraron usuarios
+                    </td>
+                  </tr>
                 )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Reset Coins Dialog */}
-      <Dialog open={resetCoinsDialog} onOpenChange={setResetCoinsDialog}>
-        <DialogContent>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal para resetear monedas */}
+      <Dialog open={isResetCoinsDialogOpen} onOpenChange={setIsResetCoinsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Actualizar Monedas</DialogTitle>
+            <DialogTitle>Ajustar Monedas</DialogTitle>
             <DialogDescription>
-              Actualiza la cantidad de monedas para {selectedUser?.name}
+              {selectedUser ? (
+                <>
+                  Usuario: <span className="font-medium">{selectedUser.name}</span>
+                </>
+              ) : 'Selecciona un usuario para ajustar sus monedas.'}
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nueva cantidad de monedas</label>
-              <Input
-                type="number"
-                min="0"
-                value={coinsAmount}
-                onChange={(e) => setCoinsAmount(parseInt(e.target.value) || 0)}
-              />
+          <form onSubmit={handleSubmitCoinsReset}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="coins" className="text-sm font-medium">
+                  Cantidad de Monedas
+                </label>
+                <Input
+                  id="coins"
+                  type="number"
+                  min="0"
+                  value={newCoinsAmount}
+                  onChange={(e) => setNewCoinsAmount(parseInt(e.target.value))}
+                  placeholder="100"
+                  required
+                />
+              </div>
             </div>
-            
-            <Alert>
-              <AlertDescription>
-                Esta acción sobrescribirá la cantidad actual de monedas ({selectedUser?.coins}) con el nuevo valor.
-              </AlertDescription>
-            </Alert>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetCoinsDialog(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={confirmResetCoins} 
-              disabled={resetCoins.isPending}
-            >
-              {resetCoins.isPending ? "Actualizando..." : "Confirmar"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsResetCoinsDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={updateCoinsMutation.isPending}
+              >
+                {updateCoinsMutation.isPending ? "Actualizando..." : "Actualizar Monedas"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
