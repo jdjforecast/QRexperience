@@ -2,6 +2,7 @@ import { users, type User, type InsertUser } from "@shared/schema";
 import { products, type Product, type InsertProduct } from "@shared/schema";
 import { orders, type Order, type InsertOrder } from "@shared/schema";
 import { orderItems, type OrderItem, type InsertOrderItem } from "@shared/schema";
+import { brandSettings, type BrandSettings, type InsertBrandSettings } from "@shared/schema";
 import { synchronizeWithGoogleSheets } from "./googleSheets";
 
 // Storage interface
@@ -11,6 +12,8 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCoins(userId: number, newCoinsAmount: number): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+  exportUsersToCSV(): Promise<string>;
   
   // Product operations
   getProduct(id: number): Promise<Product | undefined>;
@@ -18,15 +21,25 @@ export interface IStorage {
   getAllProducts(): Promise<Product[]>;
   getProductsByCategory(category: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  updateProductStock(id: number, newStock: number): Promise<Product | undefined>;
+  exportProductsToCSV(): Promise<string>;
   
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
   getOrder(id: number): Promise<Order | undefined>;
   getOrdersByUser(userId: number): Promise<Order[]>;
+  getAllOrders(): Promise<Order[]>;
+  exportOrdersToCSV(): Promise<string>;
   
   // Order items operations
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
   getOrderItems(orderId: number): Promise<OrderItem[]>;
+  getAllOrderItems(): Promise<OrderItem[]>;
+  
+  // Brand settings operations
+  getBrandSettings(): Promise<BrandSettings | undefined>;
+  createOrUpdateBrandSettings(settings: InsertBrandSettings): Promise<BrandSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -34,25 +47,47 @@ export class MemStorage implements IStorage {
   private products: Map<number, Product>;
   private orders: Map<number, Order>;
   private orderItems: Map<number, OrderItem>;
+  private brandSettings: Map<number, BrandSettings>;
   
   private userId: number;
   private productId: number;
   private orderId: number;
   private orderItemId: number;
+  private brandSettingsId: number;
 
   constructor() {
     this.users = new Map();
     this.products = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
+    this.brandSettings = new Map();
     
     this.userId = 1;
     this.productId = 1;
     this.orderId = 1;
     this.orderItemId = 1;
+    this.brandSettingsId = 1;
     
     // Initialize with some sample products
     this.initializeProducts();
+    
+    // Initialize default brand settings
+    this.initializeBrandSettings();
+  }
+  
+  private async initializeBrandSettings() {
+    const defaultSettings: InsertBrandSettings = {
+      logoUrl: 'https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=300&h=200&fit=crop&crop=center',
+      primaryColor: '#3b82f6',
+      secondaryColor: '#10b981',
+      welcomeImageUrl: 'https://images.unsplash.com/photo-1506617564039-2f3b650b7010?w=1200&h=600&fit=crop&crop=center',
+      language: 'es',
+      fontFamily: 'Inter',
+      borderRadius: '0.5rem',
+      enableAnimations: true,
+    };
+    
+    await this.createOrUpdateBrandSettings(defaultSettings);
   }
   
   private async initializeProducts() {
@@ -123,9 +158,13 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userId++;
-    const user: User = { ...insertUser, id };
+    const user: User = { ...insertUser, id, coins: insertUser.coins || 100 };
     this.users.set(id, user);
     
     // Synchronize with Google Sheets
@@ -143,6 +182,20 @@ export class MemStorage implements IStorage {
     // Synchronize with Google Sheets
     await synchronizeWithGoogleSheets('users', Array.from(this.users.values()));
     return updatedUser;
+  }
+  
+  async exportUsersToCSV(): Promise<string> {
+    const users = await this.getAllUsers();
+    
+    // Header row
+    let csv = 'ID,Name,Email,Phone,Coins\n';
+    
+    // Data rows
+    for (const user of users) {
+      csv += `${user.id},"${user.name}","${user.email}","${user.phone}",${user.coins}\n`;
+    }
+    
+    return csv;
   }
   
   // Product operations
@@ -168,12 +221,46 @@ export class MemStorage implements IStorage {
   
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = this.productId++;
-    const product: Product = { ...insertProduct, id };
+    const product: Product = { 
+      ...insertProduct, 
+      id,
+      stock: insertProduct.stock !== undefined ? insertProduct.stock : 100
+    };
     this.products.set(id, product);
     
     // Synchronize with Google Sheets
     await synchronizeWithGoogleSheets('products', Array.from(this.products.values()));
     return product;
+  }
+  
+  async updateProduct(id: number, updates: Partial<InsertProduct>): Promise<Product | undefined> {
+    const product = await this.getProduct(id);
+    if (!product) return undefined;
+    
+    const updatedProduct: Product = { ...product, ...updates };
+    this.products.set(id, updatedProduct);
+    
+    // Synchronize with Google Sheets
+    await synchronizeWithGoogleSheets('products', Array.from(this.products.values()));
+    return updatedProduct;
+  }
+  
+  async updateProductStock(id: number, newStock: number): Promise<Product | undefined> {
+    return this.updateProduct(id, { stock: newStock });
+  }
+  
+  async exportProductsToCSV(): Promise<string> {
+    const products = await this.getAllProducts();
+    
+    // Header row
+    let csv = 'ID,Name,Category,Price,Description,QR Code,Stock\n';
+    
+    // Data rows
+    for (const product of products) {
+      csv += `${product.id},"${product.name}","${product.category}",${product.price},"${product.description}","${product.qrCode}",${product.stock}\n`;
+    }
+    
+    return csv;
   }
   
   // Order operations
@@ -197,6 +284,28 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getAllOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values());
+  }
+  
+  async exportOrdersToCSV(): Promise<string> {
+    const orders = await this.getAllOrders();
+    
+    // Header row
+    let csv = 'ID,User ID,Order Date,Total,Receipt Code\n';
+    
+    // Data rows
+    for (const order of orders) {
+      const date = order.orderDate instanceof Date 
+        ? order.orderDate.toISOString() 
+        : new Date(order.orderDate).toISOString();
+      
+      csv += `${order.id},${order.userId},"${date}",${order.total},"${order.receiptCode}"\n`;
+    }
+    
+    return csv;
+  }
+  
   // Order items operations
   async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
     const id = this.orderItemId++;
@@ -212,6 +321,40 @@ export class MemStorage implements IStorage {
     return Array.from(this.orderItems.values()).filter(
       (orderItem) => orderItem.orderId === orderId
     );
+  }
+  
+  async getAllOrderItems(): Promise<OrderItem[]> {
+    return Array.from(this.orderItems.values());
+  }
+  
+  // Brand settings operations
+  async getBrandSettings(): Promise<BrandSettings | undefined> {
+    // Since we'll only have one brand settings record, always return the first one if it exists
+    const settings = Array.from(this.brandSettings.values());
+    return settings.length > 0 ? settings[0] : undefined;
+  }
+  
+  async createOrUpdateBrandSettings(settings: InsertBrandSettings): Promise<BrandSettings> {
+    const existingSettings = await this.getBrandSettings();
+    
+    if (existingSettings) {
+      // Update existing settings
+      const updatedSettings: BrandSettings = { ...existingSettings, ...settings };
+      this.brandSettings.set(existingSettings.id, updatedSettings);
+      
+      // Synchronize with Google Sheets
+      await synchronizeWithGoogleSheets('brandSettings', Array.from(this.brandSettings.values()));
+      return updatedSettings;
+    } else {
+      // Create new settings
+      const id = this.brandSettingsId++;
+      const newSettings: BrandSettings = { ...settings, id };
+      this.brandSettings.set(id, newSettings);
+      
+      // Synchronize with Google Sheets
+      await synchronizeWithGoogleSheets('brandSettings', Array.from(this.brandSettings.values()));
+      return newSettings;
+    }
   }
 }
 

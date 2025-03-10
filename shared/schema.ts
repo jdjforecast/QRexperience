@@ -27,6 +27,7 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   imageUrl: text("image_url").notNull(),
   qrCode: text("qr_code").notNull(),
+  stock: integer("stock").default(100).notNull(),
 });
 
 export const insertProductSchema = createInsertSchema(products).pick({
@@ -36,6 +37,7 @@ export const insertProductSchema = createInsertSchema(products).pick({
   description: true,
   imageUrl: true,
   qrCode: true,
+  stock: true,
 });
 
 // Order Schema
@@ -92,3 +94,30 @@ export const categories = [
 ] as const;
 
 export type Category = typeof categories[number];
+
+// Brand Settings Schema
+export const brandSettings = pgTable("brand_settings", {
+  id: serial("id").primaryKey(),
+  logoUrl: text("logo_url").notNull(),
+  primaryColor: text("primary_color").default("#3b82f6").notNull(),
+  secondaryColor: text("secondary_color").default("#10b981").notNull(),
+  welcomeImageUrl: text("welcome_image_url").notNull(),
+  language: text("language").default("es").notNull(),
+  fontFamily: text("font_family").default("Inter").notNull(),
+  borderRadius: text("border_radius").default("0.5rem").notNull(),
+  enableAnimations: boolean("enable_animations").default(true).notNull(),
+});
+
+export const insertBrandSettingsSchema = createInsertSchema(brandSettings).pick({
+  logoUrl: true,
+  primaryColor: true,
+  secondaryColor: true,
+  welcomeImageUrl: true,
+  language: true,
+  fontFamily: true,
+  borderRadius: true,
+  enableAnimations: true,
+});
+
+export type InsertBrandSettings = z.infer<typeof insertBrandSettingsSchema>;
+export type BrandSettings = typeof brandSettings.$inferSelect;
