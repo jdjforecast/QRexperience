@@ -68,6 +68,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get admin user for login - this route must be before routes with params
+  app.get("/api/users/admin", async (_req: Request, res: Response) => {
+    try {
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      // Find admin user
+      const adminUser = users.find(user => user.isAdmin);
+      
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+      
+      res.json(adminUser);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get admin user" });
+    }
+  });
+
   // Get user by ID
   app.get("/api/users/:id", async (req: Request, res: Response) => {
     try {
@@ -97,25 +116,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ isAdmin: user.isAdmin || false });
     } catch (error) {
       res.status(500).json({ message: "Failed to check admin status" });
-    }
-  });
-
-  // Get admin user for login
-  app.get("/api/users/admin", async (_req: Request, res: Response) => {
-    try {
-      // Get all users
-      const users = await storage.getAllUsers();
-      
-      // Find admin user
-      const adminUser = users.find(user => user.isAdmin);
-      
-      if (!adminUser) {
-        return res.status(404).json({ message: "Admin user not found" });
-      }
-      
-      res.json(adminUser);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to get admin user" });
     }
   });
 
@@ -152,23 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get product by ID
-  app.get("/api/products/:id", async (req: Request, res: Response) => {
-    try {
-      const productId = parseInt(req.params.id);
-      const product = await storage.getProduct(productId);
-      
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      
-      res.json(product);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to get product" });
-    }
-  });
-
-  // Get product by QR code
+  // Get product by QR code - specific routes must be before generic ones
   app.get("/api/products/qr/:qrCode", async (req: Request, res: Response) => {
     try {
       const qrCode = req.params.qrCode;
@@ -192,6 +176,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(products);
     } catch (error) {
       res.status(500).json({ message: "Failed to get products by category" });
+    }
+  });
+
+  // Get product by ID
+  app.get("/api/products/:id", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get product" });
     }
   });
 

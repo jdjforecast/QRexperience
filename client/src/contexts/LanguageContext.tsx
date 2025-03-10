@@ -12,6 +12,12 @@ type Translations = {
 
 // Define our translations
 const translations: Translations = {
+  // General
+  "loading": {
+    en: "Loading...",
+    es: "Cargando..."
+  },
+  
   // Welcome page
   "welcome.title": {
     en: "Virtual Shopping Experience",

@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Categorías disponibles en la aplicación
 export const categories = [
@@ -87,6 +88,7 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   const [coinAnimation, setCoinAnimation] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Load products
   const productsQuery = useQuery<Product[]>({
@@ -188,8 +190,8 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
       const adminData = await res.json();
       setUser(adminData);
       toast({
-        title: "Inicio de sesión exitoso",
-        description: "Has iniciado sesión como administrador.",
+        title: t("admin.login.success"),
+        description: t("admin.login.success.desc"),
       });
     } catch (error) {
       toast({
