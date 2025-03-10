@@ -27,21 +27,21 @@ export default function AdminLogin() {
       if (email === "admin@example.com" && password === "admin123") {
         await adminLogin();
         toast({
-          title: t("adminLoginSuccess"),
-          description: t("adminLoginSuccessDesc"),
+          title: t("admin.login.success"),
+          description: t("admin.login.success.desc"),
         });
         navigate("/admin");
       } else {
         toast({
-          title: t("adminLoginFailed"),
-          description: t("adminLoginFailedDesc"),
+          title: t("admin.login.failed"),
+          description: t("admin.login.failed.desc"),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: t("adminLoginError"),
-        description: t("adminLoginErrorDesc"),
+        title: t("admin.login.error"),
+        description: t("admin.login.error.desc"),
         variant: "destructive",
       });
     } finally {

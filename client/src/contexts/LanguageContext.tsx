@@ -237,6 +237,22 @@ const translations: Translations = {
     en: "There was an error logging in. Please try again",
     es: "Hubo un error al iniciar sesión. Por favor, intenta de nuevo"
   },
+  "admin.access.denied": {
+    en: "Access Denied",
+    es: "Acceso Denegado"
+  },
+  "admin.access.denied.desc": {
+    en: "You must log in to access this section",
+    es: "Debes iniciar sesión para acceder a esta sección"
+  },
+  "admin.access.restricted": {
+    en: "Access Restricted",
+    es: "Acceso Restringido"
+  },
+  "admin.access.restricted.desc": {
+    en: "You don't have permission to access the admin panel",
+    es: "No tienes permisos para acceder al panel de administración"
+  },
   
   // Category names
   "category.electronics": {
