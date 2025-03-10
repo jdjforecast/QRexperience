@@ -7,18 +7,50 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+// Overload signatures
+export async function apiRequest(method: string, url: string, data?: unknown): Promise<Response>;
+export async function apiRequest(url: string, options?: RequestInit): Promise<Response>;
 
+// Implementation
+export async function apiRequest(
+  methodOrUrl: string,
+  urlOrOptions?: string | RequestInit,
+  data?: unknown
+): Promise<Response> {
+  let url: string;
+  let options: RequestInit = {};
+  
+  // Check which overload is being used
+  if (urlOrOptions && typeof urlOrOptions === 'string') {
+    // First overload: apiRequest('GET', '/api/users', data)
+    const method = methodOrUrl;
+    url = urlOrOptions;
+    
+    options = {
+      method,
+      headers: data ? { "Content-Type": "application/json" } : {},
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    };
+  } else {
+    // Second overload: apiRequest('/api/users', { method: 'GET', ... })
+    url = methodOrUrl;
+    
+    if (urlOrOptions && typeof urlOrOptions !== 'string') {
+      options = { ...urlOrOptions };
+    } else {
+      options = {};
+    }
+    
+    options.credentials = "include";
+    
+    // Ensure headers exist if not provided
+    if (!options.headers) {
+      options.headers = {};
+    }
+  }
+
+  const res = await fetch(url, options);
   await throwIfResNotOk(res);
   return res;
 }

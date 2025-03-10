@@ -1,8 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+
+// Categorías disponibles en la aplicación
+export const categories = [
+  "Lácteos",
+  "Electrónicos",
+  "Bebidas",
+  "Frutas",
+  "Panadería",
+  "Limpieza"
+];
 
 export type User = {
   id: number;
@@ -77,16 +87,23 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   // Load products
-  const { data: products = [] } = useQuery({
+  const productsQuery = useQuery<Product[]>({
     queryKey: ['/api/products'],
-    onError: () => {
+  });
+  
+  // Manage products error state
+  useEffect(() => {
+    if (productsQuery.error) {
       toast({
         title: "Error",
         description: "No se pudieron cargar los productos. Intenta de nuevo más tarde.",
         variant: "destructive",
       });
     }
-  });
+  }, [productsQuery.error, toast]);
+  
+  // Get strongly typed products or empty array
+  const products = productsQuery.data || [];
 
   // Register user mutation
   const registerMutation = useMutation({

@@ -46,6 +46,17 @@ export default function Header() {
               </div>
               
               <CoinBadge coins={user.coins} />
+              
+              {/* Admin button - for quick access to admin panel */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setLocation("/admin")}
+                className="ml-2 p-1.5 text-xs"
+              >
+                <i className="fa-solid fa-gear mr-1"></i>
+                Admin
+              </Button>
             </div>
           ) : (
             location !== "/register" && (

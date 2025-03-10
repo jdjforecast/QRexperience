@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Scanner from "@/pages/scanner";
 import ProductPage from "@/pages/product";
 import Receipt from "@/pages/receipt";
+import AdminDashboard from "@/pages/admin";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import CartModal from "@/components/ui/cart-modal";
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/products/category/:category" component={Home} />
       <Route path="/receipt/:id" component={Receipt} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
