@@ -2,11 +2,13 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/header";
 import { useShopping } from "@/contexts/ShoppingContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 
 export default function Welcome() {
   const [location, setLocation] = useLocation();
   const { user } = useShopping();
+  const { t } = useLanguage();
   
   // If user is already logged in, redirect to home
   useEffect(() => {
@@ -32,9 +34,9 @@ export default function Welcome() {
           />
           
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Experiencia de Compra Virtual</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">{t("welcome.title")}</h2>
             <p className="text-gray-600 mb-6">
-              Escanea códigos QR, selecciona productos y utiliza tus monedas virtuales para una experiencia de compra innovadora.
+              {t("welcome.subtitle")}
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -42,7 +44,7 @@ export default function Welcome() {
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
                   <i className="fa-solid fa-user-plus text-xl"></i>
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">Regístrate</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">{t("register.register")}</h3>
                 <p className="text-gray-600 text-sm">
                   Crea tu cuenta y recibe 100 monedas virtuales para comenzar tu experiencia.
                 </p>
@@ -52,7 +54,7 @@ export default function Welcome() {
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
                   <i className="fa-solid fa-qrcode text-xl"></i>
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">Escanea</h3>
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">{t("scanner.title")}</h3>
                 <p className="text-gray-600 text-sm">
                   Utiliza la cámara de tu dispositivo para escanear los códigos QR de los productos.
                 </p>
@@ -74,7 +76,7 @@ export default function Welcome() {
               className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-md shadow-sm font-medium text-lg flex items-center gap-2 mx-auto transition"
             >
               <i className="fa-solid fa-arrow-right-to-bracket"></i>
-              Comenzar Experiencia
+              {t("welcome.start")}
             </Button>
           </div>
         </div>
