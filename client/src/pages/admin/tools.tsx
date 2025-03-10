@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,8 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ReloadIcon } from "@radix-ui/react-icons";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { ReloadIcon, DownloadIcon } from "@radix-ui/react-icons";
 import { useLanguage } from "@/contexts/LanguageContext";
+import type { BrandSettings } from "@shared/schema";
 
 export default function AdminTools() {
   const { toast } = useToast();
@@ -25,6 +28,17 @@ export default function AdminTools() {
   const [sheetsUrl, setSheetsUrl] = useState("");
   const [activeTab, setActiveTab] = useState("system");
   const [syncEnabled, setSyncEnabled] = useState(true);
+  
+  // Estado para configuración de marca
+  const [brandSettings, setBrandSettings] = useState<BrandSettings | null>(null);
+  const [logoUrl, setLogoUrl] = useState("");
+  const [welcomeImageUrl, setWelcomeImageUrl] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#3b82f6");
+  const [secondaryColor, setSecondaryColor] = useState("#10b981");
+  const [language, setLanguage] = useState("es");
+  const [fontFamily, setFontFamily] = useState("Inter");
+  const [borderRadius, setBorderRadius] = useState("0.5rem");
+  const [enableAnimations, setEnableAnimations] = useState(true);
 
   // Simulación de mutación para sincronizar con Google Sheets
   const syncSheetsMutation = useMutation({

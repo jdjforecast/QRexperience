@@ -3,7 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupGoogleSheetsConnection } from "./googleSheets";
 import { z } from "zod";
-import { insertUserSchema, insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
+import { 
+  insertUserSchema, 
+  insertOrderSchema, 
+  insertOrderItemSchema,
+  insertProductSchema,
+  insertBrandSettingsSchema
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -149,6 +155,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User does not have enough coins" });
       }
       
+      // Check if user has already bought any of these products (limit 1 per user)
+      const userOrders = await storage.getOrdersByUser(userId);
+      
+      // Get all order items for this user's orders
+      const userOrderItems = await Promise.all(
+        userOrders.map(order => storage.getOrderItems(order.id))
+      );
+      
+      // Flatten the array of order items
+      const flattenedOrderItems = userOrderItems.flat();
+      
+      // Check if any product in the cart has already been purchased by this user
+      for (const cartProduct of products) {
+        const alreadyPurchased = flattenedOrderItems.some(
+          item => item.productId === cartProduct.id
+        );
+        
+        if (alreadyPurchased) {
+          return res.status(400).json({ 
+            message: "You've already purchased one of these products. Only one purchase per product is allowed."
+          });
+        }
+        
+        // Check if product is in stock
+        const product = await storage.getProduct(cartProduct.id);
+        if (!product) {
+          return res.status(404).json({ message: `Product with ID ${cartProduct.id} not found` });
+        }
+        
+        if (product.stock <= 0) {
+          return res.status(400).json({ 
+            message: `Product "${product.name}" is out of stock` 
+          });
+        }
+      }
+      
       // Create a unique receipt code
       const receiptCode = `QR${Date.now().toString().slice(-6)}${randomUUID().substring(0, 4)}`;
       
@@ -160,13 +202,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         receiptCode
       });
       
-      // Create order items
-      for (const product of products) {
+      // Create order items and update product stock
+      for (const cartProduct of products) {
+        // Create order item
         await storage.createOrderItem({
           orderId: order.id,
-          productId: product.id,
-          price: product.price
+          productId: cartProduct.id,
+          price: cartProduct.price
         });
+        
+        // Update product stock (decrease by 1)
+        const product = await storage.getProduct(cartProduct.id);
+        if (product) {
+          await storage.updateProductStock(product.id, product.stock - 1);
+        }
       }
       
       // Update user's coins
@@ -225,6 +274,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(ordersWithItems);
     } catch (error) {
       res.status(500).json({ message: "Failed to get user orders" });
+    }
+  });
+  
+  // ==== CSV Export Routes ====
+  // Export users as CSV
+  app.get("/api/export/users", async (_req: Request, res: Response) => {
+    try {
+      const csv = await storage.exportUsersToCSV();
+      
+      res.header('Content-Type', 'text/csv');
+      res.header('Content-Disposition', 'attachment; filename="users.csv"');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export users to CSV" });
+    }
+  });
+  
+  // Export products as CSV
+  app.get("/api/export/products", async (_req: Request, res: Response) => {
+    try {
+      const csv = await storage.exportProductsToCSV();
+      
+      res.header('Content-Type', 'text/csv');
+      res.header('Content-Disposition', 'attachment; filename="products.csv"');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export products to CSV" });
+    }
+  });
+  
+  // Export orders as CSV
+  app.get("/api/export/orders", async (_req: Request, res: Response) => {
+    try {
+      const csv = await storage.exportOrdersToCSV();
+      
+      res.header('Content-Type', 'text/csv');
+      res.header('Content-Disposition', 'attachment; filename="orders.csv"');
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export orders to CSV" });
+    }
+  });
+  
+  // ==== Product Stock Management ====
+  // Create a new product
+  app.post("/api/products", async (req: Request, res: Response) => {
+    try {
+      const productInput = insertProductSchema.parse(req.body);
+      
+      // Check if a product with this QR code already exists
+      if (productInput.qrCode) {
+        const existingProduct = await storage.getProductByQrCode(productInput.qrCode);
+        if (existingProduct) {
+          return res.status(409).json({ message: "Product with this QR code already exists" });
+        }
+      }
+      
+      const product = await storage.createProduct(productInput);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+  
+  // Update a product
+  app.patch("/api/products/:id", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const updatedProduct = await storage.updateProduct(productId, updates);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+  
+  // Update product stock
+  app.patch("/api/products/:id/stock", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const { stock } = req.body;
+      
+      if (typeof stock !== "number" || stock < 0) {
+        return res.status(400).json({ message: "Invalid stock amount" });
+      }
+      
+      const updatedProduct = await storage.updateProductStock(productId, stock);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update product stock" });
+    }
+  });
+  
+  // ==== Brand Settings Routes ====
+  // Get brand settings
+  app.get("/api/brand-settings", async (_req: Request, res: Response) => {
+    try {
+      const settings = await storage.getBrandSettings();
+      
+      if (!settings) {
+        return res.status(404).json({ message: "Brand settings not found" });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get brand settings" });
+    }
+  });
+  
+  // Update brand settings
+  app.post("/api/brand-settings", async (req: Request, res: Response) => {
+    try {
+      const settingsInput = insertBrandSettingsSchema.parse(req.body);
+      
+      const settings = await storage.createOrUpdateBrandSettings(settingsInput);
+      
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid brand settings data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update brand settings" });
+    }
+  });
+  
+  // ==== Admin Routes ====
+  // Get all users for admin
+  app.get("/api/admin/users", async (_req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+  
+  // Get all orders for admin
+  app.get("/api/admin/orders", async (_req: Request, res: Response) => {
+    try {
+      const orders = await storage.getAllOrders();
+      
+      // Get items for each order
+      const ordersWithItems = await Promise.all(
+        orders.map(async (order) => {
+          const items = await storage.getOrderItems(order.id);
+          return { ...order, items };
+        })
+      );
+      
+      res.json(ordersWithItems);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get orders" });
     }
   });
 
