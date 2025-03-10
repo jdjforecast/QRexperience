@@ -189,14 +189,19 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
       }
       const adminData = await res.json();
       setUser(adminData);
+      
+      // Log successful login
+      console.log("Admin login successful", adminData);
+      
       toast({
         title: t("admin.login.success"),
         description: t("admin.login.success.desc"),
       });
     } catch (error) {
+      console.error("Admin login error:", error);
       toast({
-        title: "Error de autenticación",
-        description: "No se pudo iniciar sesión como administrador.",
+        title: t("admin.login.error"),
+        description: t("admin.login.error.desc"),
         variant: "destructive",
       });
       throw error;
