@@ -10,6 +10,7 @@ const AdminProducts = lazy(() => import("./products"));
 const AdminUsers = lazy(() => import("./users"));
 const AdminOrders = lazy(() => import("./orders"));
 const AdminTools = lazy(() => import("./tools"));
+const GoogleSheetsAdmin = lazy(() => import("./google-sheets"));
 
 // Componente para el estado de carga
 const LoadingComponent = () => (
@@ -85,6 +86,12 @@ export default function AdminDashboard() {
                 >
                   Herramientas
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="sheets" 
+                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                >
+                  Google Sheets
+                </TabsTrigger>
               </TabsList>
               
               <div className="p-6">
@@ -109,6 +116,12 @@ export default function AdminDashboard() {
                 <TabsContent value="tools">
                   <Suspense fallback={<LoadingComponent />}>
                     <AdminTools />
+                  </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="sheets">
+                  <Suspense fallback={<LoadingComponent />}>
+                    <GoogleSheetsAdmin />
                   </Suspense>
                 </TabsContent>
               </div>

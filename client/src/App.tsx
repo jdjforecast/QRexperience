@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Scanner from "@/pages/scanner";
 import ProductPage from "@/pages/product";
 import Receipt from "@/pages/receipt";
+import MyQRs from "@/pages/my-qrs";
 import AdminLogin from "@/pages/admin-login";
 import AdminDashboard from "@/pages/admin";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/product/:id" component={ProductPage} />
       <Route path="/products/category/:category" component={Home} />
       <Route path="/receipt/:id" component={Receipt} />
+      <Route path="/my-qrs" component={MyQRs} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin">
         <AdminRoute>
