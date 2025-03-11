@@ -427,6 +427,39 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
 
   // Scan QR code
   const scanQRCode = async (qrCode: string): Promise<Product | null> => {
+    // Obtener información del dispositivo y ubicación para el registro
+    const getDeviceInfo = () => {
+      const userAgent = navigator.userAgent;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      return {
+        type: isMobile ? 'mobile' : 'desktop',
+        userAgent: userAgent
+      };
+    };
+    
+    // Función para obtener la geolocalización si está disponible
+    const getLocation = (): Promise<{latitude: number, longitude: number} | null> => {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          () => {
+            resolve(null);
+          },
+          { timeout: 5000, enableHighAccuracy: true }
+        );
+      });
+    };
+    
     try {
       console.log("Escaneando QR código:", qrCode);
       
@@ -441,10 +474,47 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
       // Registro para depuración
       console.log("Buscando producto con código QR:", cleanQrCode);
       
+      // Obtener la geolocalización si está disponible
+      const geoLocation = await getLocation();
+      
+      // Obtener información del dispositivo
+      const deviceInfo = getDeviceInfo();
+      
+      // Consultar el producto
       const res = await fetch(`/api/products/qr/${encodeURIComponent(cleanQrCode)}`);
       console.log("Respuesta del servidor:", res.status, res.statusText);
       
-      if (!res.ok) {
+      // Determinar si el escaneo fue exitoso
+      const isSuccessful = res.ok;
+      
+      // Crear el objeto de registro
+      const scanLog = {
+        qrCode: cleanQrCode,
+        userId: user?.id || null,
+        productId: null, // Se actualizará si se encuentra el producto
+        scanDate: new Date(),
+        latitude: geoLocation?.latitude || null,
+        longitude: geoLocation?.longitude || null,
+        deviceInfo: JSON.stringify(deviceInfo),
+        successful: isSuccessful,
+        scanContext: "user_scanner_page"
+      };
+      
+      // Si la consulta falla, registrar un escaneo fallido
+      if (!isSuccessful) {
+        // Registrar el escaneo fallido
+        try {
+          await fetch('/api/qr-scans', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(scanLog),
+          });
+        } catch (logError) {
+          console.error("Error al registrar escaneo fallido:", logError);
+        }
+        
         if (res.status === 404) {
           throw new Error("Producto no encontrado");
         } else {
@@ -452,8 +522,26 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
+      // Si la consulta es exitosa, obtener el producto
       const product = await res.json();
       console.log("Producto encontrado:", product);
+      
+      // Actualizar el ID del producto en el registro
+      scanLog.productId = product.id;
+      
+      // Registrar el escaneo exitoso
+      try {
+        await fetch('/api/qr-scans', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(scanLog),
+        });
+      } catch (logError) {
+        console.error("Error al registrar escaneo exitoso:", logError);
+      }
+      
       return product;
     } catch (error: any) {
       console.error("Error al escanear QR:", error);
