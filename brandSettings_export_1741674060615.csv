@@ -1,0 +1,2 @@
+id,logoUrl,welcomeImageUrl,primaryColor,secondaryColor,language,fontFamily,borderRadius,enableAnimations,storeName,storeDescription,saleImageUrl
+"1","https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=300&h=200&fit=crop&crop=center","https://images.unsplash.com/photo-1506617564039-2f3b650b7010?w=1200&h=600&fit=crop&crop=center","#3b82f6","#10b981","es","Inter","0.5rem","true","Mi Tienda","Descripción de la tienda",""

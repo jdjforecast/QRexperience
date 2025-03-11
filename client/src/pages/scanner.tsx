@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
-import QRScanner from "@/components/ui/qr-scanner";
+import HTML5QrScanner from "@/components/ui/html5-qr-scanner";
 import { useShopping } from "@/contexts/ShoppingContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -73,7 +73,7 @@ export default function Scanner() {
       
       <main className="flex-grow container mx-auto px-4 pt-6 pb-20">
         <div className="max-w-md mx-auto">
-          <QRScanner 
+          <HTML5QrScanner 
             onScan={handleScan}
             onError={handleScanError}
             onClose={handleClose}
