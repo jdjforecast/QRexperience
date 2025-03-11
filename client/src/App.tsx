@@ -16,6 +16,7 @@ import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import CartModal from "@/components/ui/cart-modal";
 import AdminRoute from "@/components/layout/admin-route";
+import Footer from "@/components/layout/footer";
 
 function Router() {
   return (
@@ -44,9 +45,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ShoppingProvider>
-          <Router />
-          <CartModal />
-          <Toaster />
+          <div className="flex flex-col min-h-screen">
+            <Router />
+            <Footer />
+            <CartModal />
+            <Toaster />
+          </div>
         </ShoppingProvider>
       </LanguageProvider>
     </QueryClientProvider>

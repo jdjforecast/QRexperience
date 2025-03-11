@@ -4,6 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShopping } from "@/contexts/ShoppingContext";
+import { useToast } from "@/hooks/use-toast";
+import { GiAncientSword } from "react-icons/gi";
 
 // Importaciones con lazy loading para evitar problemas circulares
 const AdminProducts = lazy(() => import("./products"));
@@ -23,10 +26,21 @@ const LoadingComponent = () => (
 export default function AdminDashboard() {
   const [location, setLocation] = useLocation();
   const { t } = useLanguage();
+  const { logout } = useShopping();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("products");
 
   const handleBackToApp = () => {
     setLocation("/home");
+  };
+  
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión como administrador",
+    });
+    setLocation("/");
   };
 
   return (
