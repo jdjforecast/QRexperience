@@ -4,6 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLocation } from "wouter";
 
 // Categorías disponibles en la aplicación
 export const categories = [
@@ -115,6 +116,7 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [, setLocation] = useLocation();
 
   // Load products
   const productsQuery = useQuery<Product[]>({
@@ -219,8 +221,12 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
       });
       
       // Redirigir a la página de QRs después de una pequeña espera
+      // Usamos setLocation en lugar de window.location para mantener el estado
       setTimeout(() => {
-        window.location.href = "/my-qrs";
+        // Guardamos el usuario actual en localStorage antes de la redirección
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        // Usamos el router para navegar sin perder el estado
+        setLocation("/my-qrs");
       }, 1500);
     },
     onError: (error: any) => {
