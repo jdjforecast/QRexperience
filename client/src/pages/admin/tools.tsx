@@ -8,14 +8,24 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BrandSettings, User } from "@/contexts/ShoppingContext";
+import { BrandSettings, User, Product, Order } from "@/contexts/ShoppingContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isValidEmail, isValidPhone } from "@/lib/utils";
+import QRScanner from "@/components/ui/qr-scanner";
+import QRCode from "@/components/ui/qr-code";
+import { generateQRCodeURL } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminTools() {
   const { toast } = useToast();
   const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [qrResult, setQrResult] = useState<{ type: string; data: Product | Order | null }>({ 
+    type: '', 
+    data: null 
+  });
+  
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
@@ -200,6 +210,60 @@ export default function AdminTools() {
   const handleExportCSV = (type: 'users' | 'products' | 'orders') => {
     window.open(`/api/export/${type}`, '_blank');
   };
+  
+  // Manejar la lectura de códigos QR
+  const handleQRScan = async (qrCode: string) => {
+    setIsScannerOpen(false); // Cerrar el escáner una vez leído
+
+    try {
+      // Primero, intentamos ver si es un código QR de producto
+      const productRes = await fetch(`/api/products/qr/${qrCode}`);
+      
+      if (productRes.ok) {
+        const product = await productRes.json();
+        setQrResult({ type: 'product', data: product });
+        toast({
+          title: "Producto encontrado",
+          description: `Se ha encontrado el producto: ${product.name}`,
+        });
+        return;
+      }
+      
+      // Si no es producto, verificamos si es un código de recibo
+      // Verificamos todas las órdenes que tengan ese receiptCode
+      const ordersRes = await fetch(`/api/admin/orders`);
+      if (ordersRes.ok) {
+        const orders = await ordersRes.json();
+        const foundOrder = orders.find((order: Order) => order.receiptCode === qrCode);
+        
+        if (foundOrder) {
+          setQrResult({ type: 'order', data: foundOrder });
+          toast({
+            title: "Orden encontrada",
+            description: `Se ha encontrado la orden con código: ${foundOrder.receiptCode}`,
+          });
+          return;
+        }
+      }
+      
+      // Si no se encuentra nada
+      toast({
+        title: "Código QR no reconocido",
+        description: "No se pudo encontrar información asociada a este código QR.",
+        variant: "destructive",
+      });
+      setQrResult({ type: '', data: null });
+      
+    } catch (error) {
+      console.error("Error al escanear el código QR:", error);
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al procesar el código QR.",
+        variant: "destructive",
+      });
+      setQrResult({ type: '', data: null });
+    }
+  };
 
   if (isLoading) {
     return <div className="py-8 text-center">Cargando herramientas...</div>;
@@ -266,6 +330,76 @@ export default function AdminTools() {
             >
               Crear Nuevo Usuario
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Lector de QR */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Lector de Códigos QR</CardTitle>
+            <CardDescription>
+              Escanee códigos QR de productos o recibos para ver su información
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              className="w-full" 
+              onClick={() => setIsScannerOpen(true)}
+            >
+              Escanear Código QR
+            </Button>
+            
+            {qrResult.data && (
+              <div className="mt-4 border rounded-md p-4 bg-gray-50">
+                <h3 className="font-medium mb-2">
+                  {qrResult.type === 'product' ? 'Información del Producto' : 'Información de la Orden'}
+                </h3>
+                
+                {qrResult.type === 'product' && qrResult.data && (
+                  <div className="space-y-2">
+                    <div className="flex flex-col items-center mb-3">
+                      <img 
+                        src={qrResult.data.imageUrl} 
+                        alt={qrResult.data.name} 
+                        className="h-32 object-contain mb-2"
+                      />
+                      <QRCode text={qrResult.data.qrCode} size={100} />
+                    </div>
+                    <p><span className="font-medium">Nombre:</span> {qrResult.data.name}</p>
+                    <p><span className="font-medium">Categoría:</span> {qrResult.data.category}</p>
+                    <p><span className="font-medium">Precio:</span> {qrResult.data.price} coins</p>
+                    <p><span className="font-medium">Stock:</span> {qrResult.data.stock} unidades</p>
+                    <p><span className="font-medium">Código QR:</span> {qrResult.data.qrCode}</p>
+                    <p><span className="font-medium">Descripción:</span> {qrResult.data.description}</p>
+                  </div>
+                )}
+                
+                {qrResult.type === 'order' && qrResult.data && (
+                  <div className="space-y-2">
+                    <div className="flex justify-center mb-3">
+                      <QRCode text={qrResult.data.receiptCode} size={120} />
+                    </div>
+                    <p><span className="font-medium">Código de Recibo:</span> {qrResult.data.receiptCode}</p>
+                    <p><span className="font-medium">ID de Usuario:</span> {qrResult.data.userId}</p>
+                    <p><span className="font-medium">Fecha:</span> {new Date(qrResult.data.orderDate).toLocaleString()}</p>
+                    <p><span className="font-medium">Total:</span> {qrResult.data.total} coins</p>
+                    <Separator className="my-2" />
+                    <p className="font-medium">Artículos:</p>
+                    {qrResult.data.items && qrResult.data.items.length > 0 ? (
+                      <ul className="list-disc pl-5">
+                        {qrResult.data.items.map((item: any) => (
+                          <li key={item.id}>
+                            {item.product ? item.product.name : `Producto ID: ${item.productId}`} - {item.price} coins
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-500">No hay información detallada de productos</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -406,6 +540,43 @@ export default function AdminTools() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para el lector de QR */}
+      <Dialog open={isScannerOpen} onOpenChange={setIsScannerOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Escanear Código QR</DialogTitle>
+            <DialogDescription>
+              Apunte la cámara hacia un código QR de producto o de recibo de compra
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center">
+            {isScannerOpen && (
+              <QRScanner
+                onScan={handleQRScan}
+                onError={(error) => {
+                  toast({
+                    title: "Error",
+                    description: error,
+                    variant: "destructive",
+                  });
+                  setIsScannerOpen(false);
+                }}
+                onClose={() => setIsScannerOpen(false)}
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsScannerOpen(false)}
+            >
+              Cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

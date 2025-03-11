@@ -3,7 +3,7 @@ import { products, type Product, type InsertProduct } from "@shared/schema";
 import { orders, type Order, type InsertOrder } from "@shared/schema";
 import { orderItems, type OrderItem, type InsertOrderItem } from "@shared/schema";
 import { brandSettings, type BrandSettings, type InsertBrandSettings } from "@shared/schema";
-import { synchronizeWithGoogleSheets } from "./googleSheets";
+import { synchronizeWithGoogleSheets, getGoogleConfig } from "./googleSheets";
 
 // Storage interface
 export interface IStorage {
@@ -373,16 +373,46 @@ export class MemStorage implements IStorage {
   async exportOrdersToCSV(): Promise<string> {
     const orders = await this.getAllOrders();
     
-    // Header row
-    let csv = 'ID,User ID,Order Date,Total,Receipt Code\n';
+    // Header row para la vista completa (inclusiva de usuario y productos)
+    let csv = 'ID Orden,Código Recibo,Fecha Compra,Total Orden,ID Usuario,Nombre Usuario,Email Usuario,Empresa Usuario,ID Producto,Nombre Producto,Categoría Producto,Precio Producto\n';
     
-    // Data rows
+    // Recorrer todas las órdenes
     for (const order of orders) {
+      // Formatear la fecha de la orden
       const date = order.orderDate instanceof Date 
         ? order.orderDate.toISOString() 
         : new Date(order.orderDate).toISOString();
       
-      csv += `${order.id},${order.userId},"${date}",${order.total},"${order.receiptCode}"\n`;
+      // Obtener la información del usuario
+      const user = await this.getUser(order.userId);
+      if (!user) continue; // Si no hay usuario, saltamos esta orden
+      
+      // Obtener los items de la orden
+      const orderItems = await this.getOrderItems(order.id);
+      
+      if (orderItems.length === 0) {
+        // Si no hay items, al menos registrar la orden con el usuario
+        csv += `${order.id},"${order.receiptCode}","${date}",${order.total},${user.id},"${user.name}","${user.email}","${user.company}",,,,\n`;
+      } else {
+        // Por cada item en la orden, crear una fila
+        for (const item of orderItems) {
+          const product = await this.getProduct(item.productId);
+          if (!product) continue; // Si no hay producto, saltamos este item
+          
+          // Crear línea con toda la información relacionada
+          csv += `${order.id},"${order.receiptCode}","${date}",${order.total},${user.id},"${user.name}","${user.email}","${user.company}",${product.id},"${product.name}","${product.category}",${product.price}\n`;
+        }
+      }
+    }
+    
+    // Enviar a Google Sheets si está configurado
+    const config = await getGoogleConfig();
+    if (config.connected && config.sheets) {
+      try {
+        await synchronizeWithGoogleSheets('orders_detailed', [], csv);
+      } catch (error) {
+        console.error('Error al sincronizar órdenes con Google Sheets:', error);
+      }
     }
     
     return csv;
