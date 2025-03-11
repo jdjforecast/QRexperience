@@ -16,58 +16,20 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
   const [error, setError] = useState<string | null>(null);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [isTestMode, setIsTestMode] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-reader";
   
   // Verificar capacidades del dispositivo
   const isCameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   
-  // Activar modo de prueba si estamos en un entorno sin cámara después de un momento
+  // Limpiar recursos cuando el componente se desmonta
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isCameraSupported) {
-        setIsTestMode(true);
-      }
-    }, 1000);
-    
     return () => {
-      clearTimeout(timer);
       if (scannerRef.current && isScanning) {
         stopScanning();
       }
     };
-  }, [isScanning, isCameraSupported]);
-  
-  // Función para simular un escaneo en el modo de prueba
-  const handleTestScan = (qrCode: string) => {
-    setScanSuccess(true);
-    
-    // Vibrar el dispositivo si está disponible
-    if (navigator.vibrate) {
-      navigator.vibrate(200);
-    }
-    
-    // Obtener información real del dispositivo
-    const deviceInfo = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
-      isTestMode: true
-    };
-    
-    // Simular ubicación (usar una coordenada genérica de demostración)
-    const testLocation = {
-      latitude: 40.416775,
-      longitude: -3.703790
-    };
-    
-    setTimeout(() => {
-      setScanSuccess(false);
-      onScan(qrCode, testLocation, deviceInfo);
-    }, 1000);
-  };
+  }, [isScanning]);
 
   // Maneja un escaneo exitoso
   const handleSuccessfulScan = async (qrCode: string) => {
