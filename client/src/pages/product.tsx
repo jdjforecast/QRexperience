@@ -79,13 +79,40 @@ export default function ProductPage() {
                 </span>
               </div>
               
-              <div className="mb-4">
+              <div className="flex items-center space-x-2 mb-4">
                 <span className="text-sm px-2.5 py-1 bg-primary/10 text-primary rounded-full">
                   {displayProduct.category}
+                </span>
+                <span className={`text-sm px-2.5 py-1 rounded-full ${
+                  displayProduct.stock <= 0 
+                    ? "bg-red-100 text-red-800" 
+                    : displayProduct.stock <= 5 
+                      ? "bg-amber-100 text-amber-800" 
+                      : "bg-green-100 text-green-800"
+                }`}>
+                  {displayProduct.stock <= 0 
+                    ? "Sin stock" 
+                    : displayProduct.stock <= 5 
+                      ? `Últimas ${displayProduct.stock} unidades` 
+                      : "En stock"}
                 </span>
               </div>
               
               <p className="text-gray-600 mb-6">{displayProduct.description}</p>
+              
+              {displayProduct.stock <= 0 && (
+                <Alert className="mb-6 bg-red-50 border-red-200 text-red-800">
+                  <AlertDescription className="flex items-start">
+                    <i className="fa-solid fa-circle-exclamation mt-0.5 mr-3"></i>
+                    <div>
+                      <p className="font-medium">Producto sin stock</p>
+                      <p className="text-sm mt-1">
+                        Este producto no está disponible actualmente. Por favor, regresa más tarde o consulta con un administrador.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
               
               {existingProduct && (
                 <Alert className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
@@ -106,10 +133,10 @@ export default function ProductPage() {
                 <Button 
                   onClick={handleAddToCart}
                   className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm flex items-center justify-center gap-2"
-                  disabled={!canAddToCart(displayProduct)}
+                  disabled={!canAddToCart(displayProduct) || displayProduct.stock <= 0}
                 >
                   <i className="fa-solid fa-cart-plus"></i>
-                  Agregar al Carrito
+                  {displayProduct.stock <= 0 ? "Sin stock disponible" : "Agregar al Carrito"}
                 </Button>
                 
                 <Button 

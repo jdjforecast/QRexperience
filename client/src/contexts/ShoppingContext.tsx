@@ -438,6 +438,9 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   const canAddToCart = (product: Product | null): boolean => {
     if (!product || !user) return false;
     
+    // Check if product has stock available
+    if (product.stock <= 0) return false;
+    
     // Check if user has enough coins
     if (user.coins < product.price) return false;
     
