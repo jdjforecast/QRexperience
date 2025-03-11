@@ -485,6 +485,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // ==== Admin Routes ===
   
+  // Admin login
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+      
+      const user = await storage.getUserByEmailAndPassword(email, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: "User is not an admin" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+  
+  // Update user password
+  app.patch("/api/users/:id/password", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = parseInt(id);
+      const { password } = req.body;
+      
+      if (!password || typeof password !== "string") {
+        return res.status(400).json({ message: "Valid password is required" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const updatedUser = await storage.updateUserPassword(userId, password);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+  
   // Get all users for admin
   app.get("/api/admin/users", checkAdminAccess, async (_req: Request, res: Response) => {
     try {

@@ -10,8 +10,10 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByEmailAndPassword(email: string, password: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCoins(userId: number, newCoinsAmount: number): Promise<User | undefined>;
+  updateUserPassword(userId: number, newPassword: string): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
   exportUsersToCSV(): Promise<string>;
@@ -87,6 +89,7 @@ export class MemStorage implements IStorage {
         email: 'admin@example.com',
         phone: '1234567890',
         company: 'Admin Company',
+        password: 'admin123', // Contraseña por defecto
         coins: 1000,
         isAdmin: true
       },
@@ -95,6 +98,7 @@ export class MemStorage implements IStorage {
         email: 'jdjfc@hotmail.com',
         phone: '1234567890',
         company: 'Admin Company',
+        password: 'admin123', // Contraseña por defecto
         coins: 1000,
         isAdmin: true
       }
@@ -192,9 +196,27 @@ export class MemStorage implements IStorage {
       (user) => user.email === email
     );
   }
+  
+  async getUserByEmailAndPassword(email: string, password: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email && user.password === password
+    );
+  }
 
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
+  }
+  
+  async updateUserPassword(userId: number, newPassword: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    const updatedUser: User = { ...user, password: newPassword };
+    this.users.set(userId, updatedUser);
+    
+    // Synchronize with Google Sheets
+    await synchronizeWithGoogleSheets('users', Array.from(this.users.values()));
+    return updatedUser;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

@@ -95,8 +95,16 @@ type ShoppingContextType = {
 const ShoppingContext = createContext<ShoppingContextType | null>(null);
 
 export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Cargar usuario desde localStorage si existe
+  const savedUserJSON = localStorage.getItem('currentUser');
+  const savedUser = savedUserJSON ? JSON.parse(savedUserJSON) : null;
+  
+  // Cargar carrito desde localStorage si existe
+  const savedCartJSON = localStorage.getItem('cart');
+  const savedCart = savedCartJSON ? JSON.parse(savedCartJSON) : [];
+  
+  const [user, setUser] = useState<User | null>(savedUser);
+  const [cart, setCart] = useState<CartItem[]>(savedCart);
   const [showCart, setShowCart] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
@@ -195,15 +203,29 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Admin login function
-  const adminLogin = async () => {
+  const adminLogin = async (email?: string, password?: string) => {
     try {
-      // Fetch admin user by email
-      const res = await fetch(`/api/users/admin`);
-      if (!res.ok) {
-        throw new Error("No se pudo autenticar como administrador");
+      let adminData;
+      
+      if (email && password) {
+        // Autenticar con email y contraseña
+        const res = await apiRequest('POST', '/api/auth/login', { email, password });
+        if (!res.ok) {
+          throw new Error("Credenciales incorrectas");
+        }
+        adminData = await res.json();
+      } else {
+        // Modo de desarrollo: obtener admin directamente
+        const res = await fetch(`/api/users/admin`);
+        if (!res.ok) {
+          throw new Error("No se pudo autenticar como administrador");
+        }
+        adminData = await res.json();
       }
-      const adminData = await res.json();
+      
+      // Guardar el usuario en el estado y en localStorage
       setUser(adminData);
+      localStorage.setItem('currentUser', JSON.stringify(adminData));
       
       // Log successful login
       console.log("Admin login successful", adminData);
@@ -228,8 +250,16 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     clearCart();
     setLastOrder(null);
+    
+    // Eliminar el usuario de localStorage
+    localStorage.removeItem('currentUser');
   };
 
+  // Effect para guardar el carrito en localStorage siempre que cambie
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
+  
   // Add product to cart
   const addToCart = (product: Product) => {
     // Check if product can be added
