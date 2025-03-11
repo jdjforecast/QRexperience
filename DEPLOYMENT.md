@@ -86,9 +86,15 @@ Cuando la aplicación se ejecuta en producción, hay algunas diferencias importa
 
 - **Error "Cannot resolve module 'index.html"**: Si el proceso de build falla con este error:
   1. Asegúrate de que la configuración de Vite tenga correctamente definido el `root` (donde se encuentra index.html)
-  2. Define explícitamente la ruta del `input` en las opciones de rollup: `input: path.resolve(__dirname, "client/index.html")`
+  2. Define explícitamente la ruta del `input` en las opciones de rollup: `input: { main: path.resolve(__dirname, "client/index.html") }`
   3. Asegúrate de que el directorio de salida `outDir` sea coherente entre los archivos de configuración
   4. Verifica que el archivo `index.html` exista y tenga los permisos correctos
+  
+- **Error "Failed to resolve import @/components/..."**: Si encuentras errores relacionados con la resolución de módulos:
+  1. Asegúrate de que los alias estén correctamente configurados en el archivo de configuración: `resolve: { alias: { '@': path.resolve(__dirname, 'client/src') }}`
+  2. Usa `preserveEntrySignatures: 'strict'` en las opciones de rollup para mejorar la compatibilidad
+  3. Verifica que los componentes importados existan en la ruta especificada
+  4. Considera añadir los componentes problemáticos al array `external` si persisten los problemas
   
 - **Errores de ruta en el frontend después del despliegue**: 
   1. Revisa las reglas de redirección en los archivos de configuración (netlify.toml o vercel.json)

@@ -12,6 +12,11 @@ export default defineConfig({
     }
   },
   root: 'client', // Especificar el directorio raíz donde se encuentra index.html
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'client/src'), // Asegurarse de que las rutas alias estén correctamente definidas
+    },
+  },
   build: {
     outDir: '../dist', // Ajustado para que esté relativo a root
     // Specify ESM for Netlify to support top-level await
@@ -29,7 +34,8 @@ export default defineConfig({
       external: [
         '@babel/preset-typescript/package.json',
         'lightningcss'
-      ]
+      ],
+      preserveEntrySignatures: 'strict' // Preservar firmas de módulos para mejorar la compatibilidad
     }
   }
 });
