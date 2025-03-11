@@ -271,6 +271,7 @@ export default function AdminProducts() {
                   <th className="p-4 font-medium">Nombre</th>
                   <th className="p-4 font-medium">Categoría</th>
                   <th className="p-4 font-medium">Precio</th>
+                  <th className="p-4 font-medium">Stock</th>
                   <th className="p-4 font-medium">Código QR</th>
                   <th className="p-4 font-medium">Acciones</th>
                 </tr>
@@ -297,6 +298,11 @@ export default function AdminProducts() {
                       <Badge>{product.category}</Badge>
                     </td>
                     <td className="p-4">{product.price} monedas</td>
+                    <td className="p-4">
+                      <Badge variant={product.stock <= 5 ? "destructive" : (product.stock <= 15 ? "secondary" : "default")}>
+                        {product.stock || 0} unidades
+                      </Badge>
+                    </td>
                     <td className="p-4">
                       <Button 
                         variant="outline" 
@@ -328,7 +334,7 @@ export default function AdminProducts() {
                 ))}
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-4 text-center text-gray-500">
+                    <td colSpan={6} className="p-4 text-center text-gray-500">
                       No se encontraron productos
                     </td>
                   </tr>
@@ -391,15 +397,31 @@ export default function AdminProducts() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL de Imagen</Label>
+                  <Label htmlFor="stock">Stock (unidades)</Label>
                   <Input
-                    id="imageUrl"
-                    name="imageUrl"
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      stock: parseInt(e.target.value)
+                    })}
+                    required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">URL de Imagen</Label>
+                <Input
+                  id="imageUrl"
+                  name="imageUrl"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                />
               </div>
 
               <div className="space-y-2">
@@ -482,15 +504,31 @@ export default function AdminProducts() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-imageUrl">URL de Imagen</Label>
+                  <Label htmlFor="edit-stock">Stock (unidades)</Label>
                   <Input
-                    id="edit-imageUrl"
-                    name="imageUrl"
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
+                    id="edit-stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      stock: parseInt(e.target.value)
+                    })}
+                    required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-imageUrl">URL de Imagen</Label>
+                <Input
+                  id="edit-imageUrl"
+                  name="imageUrl"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  value={formData.imageUrl}
+                  onChange={handleInputChange}
+                />
               </div>
 
               <div className="space-y-2">
