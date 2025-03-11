@@ -16,22 +16,58 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
   const [error, setError] = useState<string | null>(null);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-reader";
   
   // Verificar capacidades del dispositivo
   const isCameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   
-  // Efectos de limpieza cuando el componente se desmonta
+  // Activar modo de prueba si estamos en un entorno sin cámara después de un momento
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isCameraSupported) {
+        setIsTestMode(true);
+      }
+    }, 1000);
+    
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current && isScanning) {
         stopScanning();
       }
     };
-  }, [isScanning]);
+  }, [isScanning, isCameraSupported]);
   
-  // La función para los ejemplos fue eliminada ya que solo queremos escaneo real
+  // Función para simular un escaneo en el modo de prueba
+  const handleTestScan = (qrCode: string) => {
+    setScanSuccess(true);
+    
+    // Vibrar el dispositivo si está disponible
+    if (navigator.vibrate) {
+      navigator.vibrate(200);
+    }
+    
+    // Obtener información real del dispositivo
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      isTestMode: true
+    };
+    
+    // Simular ubicación (usar una coordenada genérica de demostración)
+    const testLocation = {
+      latitude: 40.416775,
+      longitude: -3.703790
+    };
+    
+    setTimeout(() => {
+      setScanSuccess(false);
+      onScan(qrCode, testLocation, deviceInfo);
+    }, 1000);
+  };
 
   // Maneja un escaneo exitoso
   const handleSuccessfulScan = async (qrCode: string) => {
@@ -107,40 +143,98 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
         fps: 10,
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
+        // Configuración para mejorar la detección en dispositivos móviles
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
       };
       
-      const cameras = await Html5Qrcode.getCameras();
-      
-      if (cameras && cameras.length > 0) {
-        // Preferir la cámara trasera si está disponible
-        const backCamera = cameras.find(camera => 
-          camera.label.toLowerCase().includes("back") || 
-          camera.label.toLowerCase().includes("tras") ||
-          camera.label.toLowerCase().includes("rear")
-        );
+      // Intentar obtener la lista de cámaras
+      try {
+        const cameras = await Html5Qrcode.getCameras();
         
-        const cameraId = backCamera ? backCamera.id : cameras[0].id;
+        if (cameras && cameras.length > 0) {
+          // Preferir la cámara trasera si está disponible
+          const backCamera = cameras.find(camera => 
+            camera.label.toLowerCase().includes("back") || 
+            camera.label.toLowerCase().includes("tras") ||
+            camera.label.toLowerCase().includes("rear")
+          );
+          
+          const cameraId = backCamera ? backCamera.id : cameras[0].id;
+          
+          try {
+            await scannerRef.current.start(
+              cameraId,
+              config,
+              (decodedText) => {
+                handleSuccessfulScan(decodedText);
+              },
+              (errorMessage) => {
+                // Este callback es para errores durante el escaneo, no para errores de inicio
+                console.error("Error durante el escaneo:", errorMessage);
+              }
+            );
+            
+            console.log("Escáner QR iniciado correctamente");
+          } catch (startErr) {
+            console.error("Error al iniciar el escáner con cámara específica, intentando con cualquier cámara:", startErr);
+            
+            // Plan B: Si hay un error al iniciar con cámara específica, 
+            // intentar iniciar con cualquier cámara trasera
+            try {
+              await scannerRef.current.start(
+                { facingMode: "environment" }, // Forzar cámara trasera
+                config,
+                (decodedText) => {
+                  handleSuccessfulScan(decodedText);
+                },
+                (errorMessage) => {
+                  console.error("Error durante el escaneo (modo alternativo):", errorMessage);
+                }
+              );
+              console.log("Escáner QR iniciado en modo alternativo");
+            } catch (altErr: any) {
+              throw new Error(`No se pudo iniciar el escáner con ningún método: ${altErr?.message || 'Error desconocido'}`);
+            }
+          }
+        } else {
+          // Si no se pueden enumerar las cámaras, intentar con la cámara trasera directamente
+          try {
+            await scannerRef.current.start(
+              { facingMode: "environment" }, // Forzar cámara trasera
+              config,
+              (decodedText) => {
+                handleSuccessfulScan(decodedText);
+              },
+              (errorMessage) => {
+                console.error("Error durante el escaneo (modo directo):", errorMessage);
+              }
+            );
+            console.log("Escáner QR iniciado en modo directo");
+          } catch (directErr: any) {
+            throw new Error(`No se pudo acceder a la cámara: ${directErr?.message || 'Error desconocido'}`);
+          }
+        }
+      } catch (cameraErr) {
+        console.error("Error al enumerar cámaras, intentando acceso directo:", cameraErr);
         
+        // Si hay un error al enumerar cámaras, intentar acceder directamente
         try {
           await scannerRef.current.start(
-            cameraId,
+            { facingMode: "environment" }, // Forzar cámara trasera
             config,
             (decodedText) => {
               handleSuccessfulScan(decodedText);
             },
             (errorMessage) => {
-              // Este callback es para errores durante el escaneo, no para errores de inicio
-              console.error("Error durante el escaneo:", errorMessage);
+              console.error("Error durante el escaneo (fallback):", errorMessage);
             }
           );
-          
-          console.log("Escáner QR iniciado correctamente");
-        } catch (err: any) {
-          console.error("Error al iniciar el escáner:", err);
-          throw new Error(`Error al iniciar el escáner: ${err.message}`);
+          console.log("Escáner QR iniciado en modo fallback");
+        } catch (fallbackErr: any) {
+          throw new Error(`No se pudo acceder a la cámara en ningún modo: ${fallbackErr?.message || 'Error desconocido'}`);
         }
-      } else {
-        throw new Error("No se detectaron cámaras en el dispositivo");
       }
     } catch (err: any) {
       console.error("Error al iniciar el escáner:", err);
@@ -161,9 +255,11 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
       let errorMsg = err.message || "No se pudo iniciar el escáner QR";
       
       if (errorMsg.includes("Permission denied") || errorMsg.includes("permiso")) {
-        errorMsg = "No se concedieron permisos para la cámara. Por favor, inténtalo de nuevo y acepta el permiso.";
+        errorMsg = "No se concedieron permisos para la cámara. Por favor, inténtalo de nuevo y acepta el permiso. En algunos navegadores, necesitas usar HTTPS para acceder a la cámara.";
       } else if (errorMsg.includes("NotFound") || errorMsg.includes("no encontrada")) {
         errorMsg = "No se encontró ninguna cámara en tu dispositivo o está siendo usada por otra aplicación.";
+      } else if (errorMsg.includes("NotAllowedError") || errorMsg.includes("no permitido")) {
+        errorMsg = "Tu navegador ha bloqueado el acceso a la cámara. Asegúrate de estar usando HTTPS y de haber concedido los permisos necesarios.";
       }
       
       setError(errorMsg);
@@ -328,8 +424,18 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
           <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
             <p className="mb-2"><span className="font-bold">1.</span> Haz clic en "Iniciar Escáner" para activar la cámara.</p>
             <p className="mb-2"><span className="font-bold">2.</span> Apunta la cámara al código QR de un producto.</p>
-            <p><span className="font-bold">3.</span> Mantén el código QR dentro del marco hasta que sea detectado.</p>
+            <p className="mb-2"><span className="font-bold">3.</span> Mantén el código QR dentro del marco hasta que sea detectado.</p>
           </div>
+        </div>
+        
+        {/* Nota informativa para el despliegue externo */}
+        <div className="mt-4 border border-orange-200 rounded-lg bg-orange-50 p-4 text-sm text-orange-700">
+          <p className="font-medium mb-2">Nota importante:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>El acceso a la cámara solo funciona en conexiones seguras (HTTPS)</li>
+            <li>Para una experiencia óptima, utiliza esta aplicación en un dispositivo móvil</li>
+            <li>Si ves este mensaje, recuerda que esta funcionalidad está optimizada para el entorno de producción</li>
+          </ul>
         </div>
       </div>
     </div>
