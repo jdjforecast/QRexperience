@@ -11,3 +11,52 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Estilos para el escáner QR */
+#qr-reader {
+  width: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+#qr-reader__dashboard {
+  display: none !important; /* Ocultar la interfaz por defecto */
+}
+
+#qr-reader video,
+#qr-reader__scan_region video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0.5rem !important;
+  min-height: 200px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 1.5s infinite;
+}

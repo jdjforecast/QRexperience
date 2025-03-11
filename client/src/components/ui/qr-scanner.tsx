@@ -15,6 +15,20 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   const [qrScanner, setQrScanner] = useState<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-reader";
   
+  // Verificar capacidades del dispositivo
+  const isCameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  
+  // Limpiar mensajes de error cuando cambie el estado de escaneo
+  useEffect(() => {
+    if (!isScanning) {
+      // Limpiar mensajes de error después de un tiempo
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isScanning]);
+  
   // Efecto de limpieza cuando el componente se desmonta
   useEffect(() => {
     return () => {
@@ -36,22 +50,50 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
     }, 1000);
   };
   
-  // Inicia el escaneo
+  // Inicia el escaneo con manejo mejorado de permisos y errores
   const startScanning = async () => {
     setError(null);
     setIsScanning(true);
     
     try {
+      console.log("Solicitando permisos de cámara...");
+      
+      // Verificar si el navegador tiene soporte para la API de MediaDevices
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Tu navegador no soporta el acceso a la cámara. Usa los códigos de ejemplo.");
+      }
+      
+      // Intentar obtener permisos de cámara explícitamente primero
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // Detener el stream inmediatamente, solo necesitamos verificar el permiso
+        stream.getTracks().forEach(track => track.stop());
+        console.log("Permisos de cámara concedidos");
+      } catch (permissionErr) {
+        console.error("No se pudo obtener permiso de cámara:", permissionErr);
+        throw new Error("No se concedió permiso para acceder a la cámara. Por favor intenta de nuevo.");
+      }
+      
       // Inicializa el escáner
       const scanner = new Html5Qrcode(scannerContainerId);
       setQrScanner(scanner);
+      console.log("Escáner inicializado");
       
-      // Configura y comienza el escaneo
+      // Configuración optimizada
       const config = { 
         fps: 10,
-        qrbox: { width: 250, height: 250 }
+        qrbox: { width: 200, height: 200 },
+        aspectRatio: 1,
+        disableFlip: false,
+        formatsToSupport: [0, 1, 2, 3], // QR, AZTEC, CODE_39, CODE_128
+        videoConstraints: {
+          facingMode: "environment",
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
       };
       
+      console.log("Iniciando escáner con configuración:", config);
       await scanner.start(
         { facingMode: "environment" }, // Usar cámara trasera
         config,
@@ -59,6 +101,11 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
           // Éxito al escanear
           console.log("QR detectado:", decodedText);
           setScanSuccess(true);
+          
+          // Vibrar el dispositivo si está disponible (feedback táctil)
+          if (navigator.vibrate) {
+            navigator.vibrate(200);
+          }
           
           // Detiene el escáner y notifica
           setTimeout(() => {
@@ -71,10 +118,21 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
           console.debug("Buscando QR:", errorMessage);
         }
       );
-    } catch (err) {
+      
+      console.log("Escáner iniciado exitosamente");
+    } catch (err: any) {
       console.error("Error al iniciar el escáner:", err);
       stopScanning();
-      setError("No se pudo iniciar la cámara. ¿Diste permiso para usar la cámara?");
+      // Mensaje de error más amigable
+      const errorMsg = err.message || "No se pudo iniciar la cámara. Verifica los permisos.";
+      setError(errorMsg);
+      
+      // Si es un error de permisos, mostrar mensaje más específico
+      if (errorMsg.includes("Permission denied") || errorMsg.includes("permiso")) {
+        setError("No se pudo acceder a la cámara. Por favor concede los permisos cuando te lo solicite el navegador.");
+      } else if (errorMsg.includes("NotFound") || errorMsg.includes("no encontrada")) {
+        setError("No se encontró ninguna cámara en tu dispositivo, o está siendo usada por otra aplicación.");
+      }
     }
   };
   
@@ -112,15 +170,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
             className="w-full h-full absolute top-0 left-0"
           ></div>
           
-          {/* Estilos globales para la cámara */}
-          <style jsx global>{`
-            #${scannerContainerId} video {
-              width: 100% !important;
-              height: 100% !important;
-              object-fit: cover !important;
-              border-radius: 0.5rem !important;
-            }
-          `}</style>
+          {/* Los estilos personalizados se aplicarán mediante clases CSS */}
           
           {/* Mensaje cuando no está escaneando */}
           {!isScanning && (
@@ -172,13 +222,24 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
         )}
         
         <div className="flex gap-3">
-          <Button 
-            onClick={isScanning ? handleStopScanning : startScanning}
-            className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm flex items-center justify-center gap-2"
-          >
-            <i className={`fa-solid ${isScanning ? 'fa-stop' : 'fa-qrcode'}`}></i>
-            {isScanning ? 'Detener Escáner' : 'Iniciar Escáner'}
-          </Button>
+          {isCameraSupported ? (
+            <Button 
+              onClick={isScanning ? handleStopScanning : startScanning}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm flex items-center justify-center gap-2"
+            >
+              <i className={`fa-solid ${isScanning ? 'fa-stop' : 'fa-qrcode'}`}></i>
+              {isScanning ? 'Detener Escáner' : 'Iniciar Escáner'}
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => setError("Tu dispositivo no soporta acceso a la cámara. Usa los códigos de ejemplo de abajo.")}
+              className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium shadow-sm flex items-center justify-center gap-2"
+              disabled
+            >
+              <i className="fa-solid fa-exclamation-triangle"></i>
+              Cámara no compatible
+            </Button>
+          )}
           
           <Button 
             onClick={onClose}
