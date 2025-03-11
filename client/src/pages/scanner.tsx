@@ -31,7 +31,18 @@ export default function Scanner() {
       const product = await scanQRCode(qrCode);
       if (product) {
         setSelectedProduct(product);
-        setLocation(`/product/${product.id}`);
+        
+        // Mostrar notificación de éxito
+        toast({
+          title: t("scanner.success"),
+          description: `${product.name} ${t("scanner.product.added")}`,
+        });
+        
+        // Breve pausa para mostrar animación/notificación
+        setTimeout(() => {
+          // Redirigir al carrito para completar la compra
+          setLocation("/home");
+        }, 1500);
       }
     } catch (error) {
       toast({

@@ -555,6 +555,35 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error al registrar escaneo exitoso:", logError);
       }
       
+      // Añadir automáticamente el producto al carrito si tiene stock disponible
+      if (product.stock > 0) {
+        // Verificar si ya hay otro producto de la misma categoría
+        const existingProduct = getExistingProductByCategory(product.category);
+        
+        if (existingProduct) {
+          // Si ya hay un producto de la misma categoría, mostrar alerta
+          toast({
+            title: "Atención",
+            description: `Ya tienes "${existingProduct.name}" en tu carrito. Solo puedes tener un producto por categoría.`,
+            variant: "destructive",
+          });
+        } else {
+          // Añadir al carrito y actualizar en la UI
+          addToCart(product);
+          toast({
+            title: "¡Producto escaneado!",
+            description: `${product.name} ha sido añadido a tu carrito.`,
+          });
+        }
+      } else {
+        // Mostrar mensaje de stock agotado
+        toast({
+          title: "Stock agotado",
+          description: `${product.name} no tiene unidades disponibles en este momento.`,
+          variant: "destructive",
+        });
+      }
+      
       return product;
     } catch (error: any) {
       console.error("Error al escanear QR:", error);
