@@ -79,17 +79,20 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
       setQrScanner(scanner);
       console.log("Escáner inicializado");
       
-      // Configuración optimizada
+      // Configuración optimizada con todos los formatos soportados
       const config = { 
         fps: 10,
-        qrbox: { width: 200, height: 200 },
-        aspectRatio: 1,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
         disableFlip: false,
-        formatsToSupport: [0, 1, 2, 3], // QR, AZTEC, CODE_39, CODE_128
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        },
+        rememberLastUsedCamera: true,
         videoConstraints: {
-          facingMode: "environment",
-          width: { ideal: 640 },
-          height: { ideal: 480 }
+          facingMode: { exact: "environment" },
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 }
         }
       };
       

@@ -428,15 +428,38 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   // Scan QR code
   const scanQRCode = async (qrCode: string): Promise<Product | null> => {
     try {
-      const res = await fetch(`/api/products/qr/${qrCode}`);
-      if (!res.ok) {
-        throw new Error("Producto no encontrado");
+      console.log("Escaneando QR código:", qrCode);
+      
+      // Limpia el código QR de posibles espacios o caracteres no deseados
+      const cleanQrCode = qrCode.trim();
+      
+      if (!cleanQrCode) {
+        console.error("Código QR vacío detectado");
+        throw new Error("Código QR inválido");
       }
-      return await res.json();
-    } catch (error) {
+      
+      // Registro para depuración
+      console.log("Buscando producto con código QR:", cleanQrCode);
+      
+      const res = await fetch(`/api/products/qr/${encodeURIComponent(cleanQrCode)}`);
+      console.log("Respuesta del servidor:", res.status, res.statusText);
+      
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Producto no encontrado");
+        } else {
+          throw new Error(`Error del servidor: ${res.status}`);
+        }
+      }
+      
+      const product = await res.json();
+      console.log("Producto encontrado:", product);
+      return product;
+    } catch (error: any) {
+      console.error("Error al escanear QR:", error);
       toast({
         title: "Error al escanear",
-        description: "No se pudo encontrar el producto con este código QR.",
+        description: error.message || "No se pudo encontrar el producto con este código QR.",
         variant: "destructive",
       });
       return null;
