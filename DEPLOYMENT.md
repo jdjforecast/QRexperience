@@ -33,6 +33,14 @@ La aplicación registra datos de ubicación con los escaneos QR (si el usuario l
 2. Netlify detectará automáticamente la configuración en `netlify.toml`
 3. Configura las variables de entorno similares a Vercel
 
+#### Solución a problemas comunes en Netlify
+
+Si encuentras errores relacionados con **"top-level await"** o **"resolver packages"**, la configuración especial en los archivos `netlify.toml` y `vite.netlify.config.js` debería resolverlos:
+
+- El archivo `vite.netlify.config.js` configura Vite para usar formato ESM en lugar de CJS
+- Se han marcado como externos los paquetes problemáticos (`@babel/preset-typescript` y `lightningcss`)
+- La configuración de Node está establecida en versión 18 para compatibilidad óptima
+
 ## Configuración de Stripe para producción
 
 Para procesar pagos en producción con Stripe:

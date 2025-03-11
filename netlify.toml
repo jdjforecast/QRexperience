@@ -1,10 +1,26 @@
 [build]
-  command = "npm run build"
+  command = "npx vite build --config vite.netlify.config.js"
   publish = "client/dist"
   functions = "server"
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["@babel/preset-typescript", "lightningcss"]
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.css]
+  bundle = true
+  minify = true
 
 [[redirects]]
   from = "/api/*"
