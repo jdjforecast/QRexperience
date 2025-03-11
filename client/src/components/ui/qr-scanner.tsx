@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Html5Qrcode } from "html5-qrcode";
+import jsQR from "jsqr";
 
 interface QRScannerProps {
   onScan: (qrCode: string) => void;
@@ -12,13 +12,16 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   const [error, setError] = useState<string | null>(null);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [qrScanner, setQrScanner] = useState<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const requestAnimationFrameId = useRef<number | null>(null);
   const scannerContainerId = "qr-reader";
   
   // Verificar capacidades del dispositivo
   const isCameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   
-  // Limpiar mensajes de error cuando cambie el estado de escaneo
+  // Efectos de limpieza y reseteo
   useEffect(() => {
     if (!isScanning) {
       // Limpiar mensajes de error después de un tiempo
@@ -32,20 +35,120 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   // Efecto de limpieza cuando el componente se desmonta
   useEffect(() => {
     return () => {
-      if (qrScanner && qrScanner.isScanning) {
-        console.log("Limpiando escáner al desmontar...");
-        qrScanner.stop().catch(console.error);
-      }
+      stopVideoStream();
+      cancelAnimationFrame();
     };
-  }, [qrScanner]);
+  }, []);
   
-  // Simulador de escaneo para demostración
+  // Simulador de escaneo para demostración de ejemplo
   const simulateScan = (qrCode: string) => {
     setScanSuccess(true);
-    setError(null);
+    
+    // Vibrar el dispositivo si está disponible
+    if (navigator.vibrate) {
+      navigator.vibrate(200);
+    }
     
     setTimeout(() => {
       setScanSuccess(false);
+      onScan(qrCode);
+    }, 1000);
+  };
+  
+  // Procesa un frame para detectar un código QR
+  const processFrame = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!video || !canvas || video.paused || video.ended || !isScanning) {
+      return;
+    }
+    
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    // Ajustar canvas al tamaño del video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Dibujar el cuadro actual del video en el canvas
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    try {
+      // Método 1: Intentar decodificar QR con BarcodeDetector si está disponible
+      if ('BarcodeDetector' in window) {
+        console.log("Usando BarcodeDetector API");
+        const barcodeDetector = new (window as any).BarcodeDetector({
+          formats: ['qr_code']
+        });
+        
+        barcodeDetector.detect(canvas)
+          .then((barcodes: any[]) => {
+            if (barcodes.length > 0) {
+              const qrCode = barcodes[0].rawValue;
+              console.log("QR detectado (BarcodeDetector):", qrCode);
+              handleSuccessfulScan(qrCode);
+              return;
+            }
+            
+            // Si BarcodeDetector no encuentra nada, intentamos con jsQR
+            tryJsQR(ctx);
+          })
+          .catch((err: any) => {
+            console.error("Error en BarcodeDetector:", err);
+            // Si hay error en BarcodeDetector, intentamos con jsQR
+            tryJsQR(ctx);
+          });
+      } else {
+        // Método 2: Usar jsQR como alternativa
+        tryJsQR(ctx);
+      }
+    } catch (error) {
+      console.error("Error procesando frame:", error);
+      requestAnimationFrameId.current = requestAnimationFrame(processFrame);
+    }
+  };
+  
+  // Intenta decodificar un QR con la biblioteca jsQR
+  const tryJsQR = (ctx: CanvasRenderingContext2D) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isScanning) return;
+    
+    try {
+      console.log("Intentando detección con jsQR");
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
+      
+      if (code) {
+        console.log("QR detectado (jsQR):", code.data);
+        handleSuccessfulScan(code.data);
+        return;
+      }
+      
+      // Si no hay código QR, continuamos el bucle
+      requestAnimationFrameId.current = requestAnimationFrame(processFrame);
+    } catch (err) {
+      console.error("Error en jsQR:", err);
+      requestAnimationFrameId.current = requestAnimationFrame(processFrame);
+    }
+  };
+  
+  const handleSuccessfulScan = (qrCode: string) => {
+    // Evitar escaneos múltiples
+    if (!isScanning || scanSuccess) return;
+    
+    setScanSuccess(true);
+    
+    // Vibrar el dispositivo como feedback táctil
+    if (navigator.vibrate) {
+      navigator.vibrate(200);
+    }
+    
+    // Detener el escaneo y notificar después de un momento
+    setTimeout(() => {
+      stopScanning();
       onScan(qrCode);
     }, 1000);
   };
@@ -58,103 +161,95 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
     try {
       console.log("Solicitando permisos de cámara...");
       
-      // Verificar si el navegador tiene soporte para la API de MediaDevices
+      // Verificar soporte
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Tu navegador no soporta el acceso a la cámara. Usa los códigos de ejemplo.");
       }
       
-      // Intentar obtener permisos de cámara explícitamente primero
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // Detener el stream inmediatamente, solo necesitamos verificar el permiso
-        stream.getTracks().forEach(track => track.stop());
-        console.log("Permisos de cámara concedidos");
-      } catch (permissionErr) {
-        console.error("No se pudo obtener permiso de cámara:", permissionErr);
-        throw new Error("No se concedió permiso para acceder a la cámara. Por favor intenta de nuevo.");
-      }
-      
-      // Inicializa el escáner
-      const scanner = new Html5Qrcode(scannerContainerId);
-      setQrScanner(scanner);
-      console.log("Escáner inicializado");
-      
-      // Configuración optimizada con todos los formatos soportados
-      const config = { 
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-        disableFlip: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        },
-        rememberLastUsedCamera: true,
-        videoConstraints: {
-          facingMode: { exact: "environment" },
-          width: { min: 640, ideal: 1280, max: 1920 },
-          height: { min: 480, ideal: 720, max: 1080 }
+      // Intentar obtener el stream de la cámara
+      const constraints = {
+        video: { 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         }
       };
       
-      console.log("Iniciando escáner con configuración:", config);
-      await scanner.start(
-        { facingMode: "environment" }, // Usar cámara trasera
-        config,
-        (decodedText) => {
-          // Éxito al escanear
-          console.log("QR detectado:", decodedText);
-          setScanSuccess(true);
-          
-          // Vibrar el dispositivo si está disponible (feedback táctil)
-          if (navigator.vibrate) {
-            navigator.vibrate(200);
-          }
-          
-          // Detiene el escáner y notifica
-          setTimeout(() => {
-            stopScanning(scanner);
-            onScan(decodedText);
-          }, 1000);
-        },
-        (errorMessage) => {
-          // No muestra errores continuos durante el escaneo
-          console.debug("Buscando QR:", errorMessage);
+      try {
+        // Detener cualquier stream anterior
+        stopVideoStream();
+        
+        // Obtener nuevo stream
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log("Stream de cámara obtenido:", stream.getVideoTracks()[0].label);
+        
+        mediaStreamRef.current = stream;
+        
+        // Asignar stream al video
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            // Empezar la reproducción después de cargar metadatos
+            if (videoRef.current) {
+              videoRef.current.play().then(() => {
+                console.log("Reproducción de video iniciada");
+                // Comenzar a procesar frames
+                processFrame();
+              }).catch(err => {
+                console.error("Error al iniciar la reproducción:", err);
+                throw new Error("No se pudo iniciar la reproducción de video");
+              });
+            }
+          };
         }
-      );
+      } catch (err: any) {
+        console.error("Error al acceder a la cámara:", err);
+        throw new Error(`No se pudo acceder a la cámara: ${err.message}`);
+      }
       
-      console.log("Escáner iniciado exitosamente");
     } catch (err: any) {
       console.error("Error al iniciar el escáner:", err);
       stopScanning();
-      // Mensaje de error más amigable
-      const errorMsg = err.message || "No se pudo iniciar la cámara. Verifica los permisos.";
-      setError(errorMsg);
       
-      // Si es un error de permisos, mostrar mensaje más específico
+      // Mensajes de error personalizados
+      let errorMsg = err.message || "No se pudo iniciar el escáner de QR";
+      
       if (errorMsg.includes("Permission denied") || errorMsg.includes("permiso")) {
-        setError("No se pudo acceder a la cámara. Por favor concede los permisos cuando te lo solicite el navegador.");
+        errorMsg = "No se concedieron permisos para la cámara. Por favor, inténtalo de nuevo y acepta el permiso.";
       } else if (errorMsg.includes("NotFound") || errorMsg.includes("no encontrada")) {
-        setError("No se encontró ninguna cámara en tu dispositivo, o está siendo usada por otra aplicación.");
+        errorMsg = "No se encontró ninguna cámara en tu dispositivo o está siendo usada por otra aplicación.";
       }
+      
+      setError(errorMsg);
+      onError(errorMsg);
     }
   };
   
-  // Detiene el escaneo (versión para el botón)
-  const handleStopScanning = () => {
-    if (qrScanner && qrScanner.isScanning) {
-      console.log("Deteniendo escáner...");
-      qrScanner.stop().catch(console.error);
+  // Detiene el video stream
+  const stopVideoStream = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
     }
-    setIsScanning(false);
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   };
   
-  // Función para uso interno con parámetro scanner opcional
-  const stopScanning = (scanner = qrScanner) => {
-    if (scanner && scanner.isScanning) {
-      console.log("Deteniendo escáner interno...");
-      scanner.stop().catch(console.error);
+  // Cancela la animación frame
+  const cancelAnimationFrame = () => {
+    if (requestAnimationFrameId.current) {
+      window.cancelAnimationFrame(requestAnimationFrameId.current);
+      requestAnimationFrameId.current = null;
     }
+  };
+  
+  // Detiene el escaneo completamente
+  const stopScanning = () => {
     setIsScanning(false);
+    stopVideoStream();
+    cancelAnimationFrame();
   };
 
   return (
@@ -177,7 +272,20 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
       <div className="relative mb-6 overflow-hidden rounded-lg shadow-md">
         {/* Contenedor para el escáner de QR */}
         <div className="w-full h-64 bg-gradient-to-b from-gray-800 to-gray-950 rounded-lg relative overflow-hidden">
-          {/* Div contenedor para la librería HTML5 QR Code Scanner */}
+          {/* Elementos de video y canvas para el escaneo */}
+          <video 
+            ref={videoRef} 
+            className="w-full h-full object-cover absolute top-0 left-0 z-0"
+            playsInline
+            muted
+            hidden={!isScanning}
+          ></video>
+          <canvas 
+            ref={canvasRef} 
+            className="absolute opacity-0 pointer-events-none"
+          ></canvas>
+          
+          {/* Div contenedor para compatibilidad */}
           <div 
             id={scannerContainerId} 
             className="w-full h-full absolute top-0 left-0"
@@ -273,7 +381,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
         <div className="flex gap-3">
           {isCameraSupported ? (
             <Button 
-              onClick={isScanning ? handleStopScanning : startScanning}
+              onClick={isScanning ? stopScanning : startScanning}
               className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm flex items-center justify-center gap-2"
             >
               <i className={`fa-solid ${isScanning ? 'fa-stop' : 'fa-qrcode'}`}></i>
