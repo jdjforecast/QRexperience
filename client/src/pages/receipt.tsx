@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
 import QRCode from "@/components/ui/qr-code";
-import { useShopping, Order, OrderItem } from "@/contexts/ShoppingContext";
+import { useShopping, Order, OrderItem, Product } from "@/contexts/ShoppingContext";
 import { formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -24,6 +24,11 @@ export default function Receipt() {
   const { data: fetchedOrder } = useQuery({
     queryKey: [`/api/orders/${orderId}`],
     enabled: !isLatestReceipt && !!orderId && !lastOrder
+  });
+  
+  // Fetch all products to get detailed product information
+  const productsQuery = useQuery<Product[]>({
+    queryKey: ['/api/products'],
   });
   
   // Use the appropriate order source
@@ -102,15 +107,19 @@ export default function Receipt() {
                 <h3 className="font-semibold text-gray-800 mb-3">Productos:</h3>
                 
                 <div className="space-y-2">
-                  {order.items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between items-center text-sm">
-                      <span>{`${item.product?.name || 'Producto'} (${item.product?.category || 'Categoría'})`}</span>
-                      <span className="flex items-center text-amber-500 font-medium">
-                        <i className="fa-solid fa-coins mr-1 text-xs"></i>
-                        <span>{item.price}</span>
-                      </span>
-                    </div>
-                  ))}
+                  {order.items.map((item: OrderItem) => {
+                    // Buscar el producto completo en los productos disponibles por ID
+                    const productDetails = productsQuery.data?.find((p: Product) => p.id === item.productId);
+                    return (
+                      <div key={item.id} className="flex justify-between items-center text-sm">
+                        <span>{`${productDetails?.name || 'Producto'} (${productDetails?.category || 'Categoría'})`}</span>
+                        <span className="flex items-center text-amber-500 font-medium">
+                          <i className="fa-solid fa-coins mr-1 text-xs"></i>
+                          <span>{item.price}</span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               
