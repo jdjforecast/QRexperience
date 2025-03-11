@@ -53,9 +53,20 @@ export default function AdminDashboard() {
               Panel de Administración
             </h1>
           </div>
-          <Button onClick={handleBackToApp} variant="outline" size="sm">
-            Volver a la Aplicación
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button onClick={handleBackToApp} variant="outline" size="sm">
+              Volver a la Aplicación
+            </Button>
+            <Button 
+              onClick={handleLogout} 
+              variant="ghost" 
+              size="icon" 
+              title="Cerrar sesión"
+              className="text-xl font-bold"
+            >
+              <span className="text-xl">Λ</span>
+            </Button>
+          </div>
         </div>
       </header>
 
