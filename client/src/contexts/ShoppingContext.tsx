@@ -20,6 +20,7 @@ export type User = {
   name: string;
   email: string;
   phone: string;
+  company: string;
   coins: number;
   isAdmin: boolean;
 };
@@ -76,7 +77,7 @@ type ShoppingContextType = {
   selectedProduct: Product | null;
   setSelectedProduct: (product: Product | null) => void;
   lastOrder: Order | null;
-  registerUser: (userData: { name: string; email: string; phone: string }) => Promise<void>;
+  registerUser: (userData: { name: string; email: string; phone: string; company: string }) => Promise<void>;
   adminLogin: () => Promise<void>;
   logout: () => void;
   addToCart: (product: Product) => void;
@@ -125,7 +126,7 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
 
   // Register user mutation
   const registerMutation = useMutation({
-    mutationFn: async (userData: { name: string; email: string; phone: string }) => {
+    mutationFn: async (userData: { name: string; email: string; phone: string; company: string }) => {
       const res = await apiRequest('POST', '/api/users', userData);
       return res.json();
     },
@@ -189,7 +190,7 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
   });
 
   // Register user function
-  const registerUser = async (userData: { name: string; email: string; phone: string }) => {
+  const registerUser = async (userData: { name: string; email: string; phone: string; company: string }) => {
     await registerMutation.mutateAsync(userData);
   };
 

@@ -85,6 +85,7 @@ export class MemStorage implements IStorage {
         name: 'Administrador',
         email: 'admin@example.com',
         phone: '1234567890',
+        company: 'Admin Company',
         coins: 1000,
         isAdmin: true
       },
@@ -92,6 +93,7 @@ export class MemStorage implements IStorage {
         name: 'Jaime',
         email: 'jdjfc@hotmail.com',
         phone: '1234567890',
+        company: 'Admin Company',
         coins: 1000,
         isAdmin: true
       }
@@ -226,11 +228,11 @@ export class MemStorage implements IStorage {
     const users = await this.getAllUsers();
     
     // Header row
-    let csv = 'ID,Name,Email,Phone,Coins,IsAdmin\n';
+    let csv = 'ID,Name,Email,Phone,Company,Coins,IsAdmin\n';
     
     // Data rows
     for (const user of users) {
-      csv += `${user.id},"${user.name}","${user.email}","${user.phone}",${user.coins},${user.isAdmin}\n`;
+      csv += `${user.id},"${user.name}","${user.email}","${user.phone}","${user.company}",${user.coins},${user.isAdmin}\n`;
     }
     
     return csv;
