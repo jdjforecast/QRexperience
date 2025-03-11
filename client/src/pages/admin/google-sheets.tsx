@@ -201,6 +201,33 @@ export default function GoogleSheetsAdmin() {
     e.preventDefault();
     saveDriveMutation.mutate(driveConfig);
   };
+  
+  // Handler para cambiar el modo simple/avanzado
+  const handleToggleSimpleMode = () => {
+    setSimpleMode(!simpleMode);
+  };
+  
+  // Handler para cambios en URL simple de Google Sheets
+  const handleSimpleSheetsUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSimpleSheetsUrl(e.target.value);
+  };
+  
+  // Handler para cambios en URL simple de Google Drive
+  const handleSimpleDriveUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSimpleDriveUrl(e.target.value);
+  };
+  
+  // Handler para guardar URL simple de Google Sheets
+  const handleSaveSimpleSheetsUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSimpleSheetsMutation.mutate(simpleSheetsUrl);
+  };
+  
+  // Handler para guardar URL simple de Google Drive
+  const handleSaveSimpleDriveUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveSimpleDriveMutation.mutate(simpleDriveUrl);
+  };
 
   // Función para iniciar sincronización manual con Google Sheets
   const handleSyncData = async () => {
@@ -277,10 +304,22 @@ export default function GoogleSheetsAdmin() {
       {/* Sección de configuración */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Configuración de Google</CardTitle>
-          <CardDescription>
-            Configure sus credenciales de Google Sheets o Drive para sincronizar datos
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Configuración de Google</CardTitle>
+              <CardDescription>
+                Configure sus credenciales de Google Sheets o Drive para sincronizar datos
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="simpleMode" className="text-sm text-gray-600">Modo Simple</Label>
+              <Switch
+                id="simpleMode"
+                checked={simpleMode}
+                onCheckedChange={handleToggleSimpleMode}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="sheets" value={configTab} onValueChange={setConfigTab}>
@@ -290,115 +329,197 @@ export default function GoogleSheetsAdmin() {
             </TabsList>
             
             <TabsContent value="sheets">
-              <form onSubmit={handleSaveSheetsConfig}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="spreadsheetId">ID de la Hoja de Cálculo</Label>
-                    <Input 
-                      id="spreadsheetId"
-                      name="spreadsheetId"
-                      value={sheetsConfig.spreadsheetId}
-                      onChange={handleSheetsConfigChange}
-                      placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Se encuentra en la URL de la hoja: https://docs.google.com/spreadsheets/d/<span className="font-medium">ID</span>/edit
-                    </p>
+              {simpleMode ? (
+                <form onSubmit={handleSaveSimpleSheetsUrl}>
+                  <div className="space-y-4">
+                    <Alert className="bg-green-50 border-green-200 text-green-800 mb-6">
+                      <AlertDescription className="flex items-start">
+                        <i className="fa-solid fa-info-circle mt-0.5 mr-3"></i>
+                        <div>
+                          <p className="font-medium">Modo Simple Activado</p>
+                          <p className="text-sm mt-1">
+                            No necesita crear un proyecto en Google Cloud Console. 
+                            Simplemente proporcione la URL completa de su hoja de cálculo y 
+                            asegúrese de que esté compartida con acceso público o con cualquier persona que tenga el enlace.
+                          </p>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="simpleSheetsUrl">URL de Google Sheets</Label>
+                      <Input 
+                        id="simpleSheetsUrl"
+                        value={simpleSheetsUrl}
+                        onChange={handleSimpleSheetsUrlChange}
+                        placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
+                      />
+                      <p className="text-sm text-gray-500">
+                        URL completa de su hoja de cálculo de Google Sheets
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="mt-2"
+                      disabled={saveSimpleSheetsMutation.isPending}
+                    >
+                      {saveSimpleSheetsMutation.isPending ? 'Guardando...' : 'Guardar URL de Hoja'}
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="clientEmail">Email de Cuenta de Servicio</Label>
-                    <Input 
-                      id="clientEmail"
-                      name="clientEmail"
-                      value={sheetsConfig.clientEmail}
-                      onChange={handleSheetsConfigChange}
-                      placeholder="proyecto-123456@proyecto.iam.gserviceaccount.com"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Email de la cuenta de servicio de Google Cloud
-                    </p>
+                </form>
+              ) : (
+                <form onSubmit={handleSaveSheetsConfig}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="spreadsheetId">ID de la Hoja de Cálculo</Label>
+                      <Input 
+                        id="spreadsheetId"
+                        name="spreadsheetId"
+                        value={sheetsConfig.spreadsheetId}
+                        onChange={handleSheetsConfigChange}
+                        placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Se encuentra en la URL de la hoja: https://docs.google.com/spreadsheets/d/<span className="font-medium">ID</span>/edit
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="clientEmail">Email de Cuenta de Servicio</Label>
+                      <Input 
+                        id="clientEmail"
+                        name="clientEmail"
+                        value={sheetsConfig.clientEmail}
+                        onChange={handleSheetsConfigChange}
+                        placeholder="proyecto-123456@proyecto.iam.gserviceaccount.com"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Email de la cuenta de servicio de Google Cloud
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="privateKey">Clave Privada</Label>
+                      <Input 
+                        id="privateKey"
+                        name="privateKey"
+                        value={sheetsConfig.privateKey}
+                        onChange={handleSheetsConfigChange}
+                        placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Clave privada de la cuenta de servicio (desde archivo JSON)
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="mt-2"
+                      disabled={saveSheetsMutation.isPending}
+                    >
+                      {saveSheetsMutation.isPending ? 'Guardando...' : 'Guardar Configuración'}
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="privateKey">Clave Privada</Label>
-                    <Input 
-                      id="privateKey"
-                      name="privateKey"
-                      value={sheetsConfig.privateKey}
-                      onChange={handleSheetsConfigChange}
-                      placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Clave privada de la cuenta de servicio (desde archivo JSON)
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="mt-2"
-                    disabled={saveSheetsMutation.isPending}
-                  >
-                    {saveSheetsMutation.isPending ? 'Guardando...' : 'Guardar Configuración'}
-                  </Button>
-                </div>
-              </form>
+                </form>
+              )}
             </TabsContent>
             
             <TabsContent value="drive">
-              <form onSubmit={handleSaveDriveConfig}>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="folderId">ID de la Carpeta</Label>
-                    <Input 
-                      id="folderId"
-                      name="folderId"
-                      value={driveConfig.folderId}
-                      onChange={handleDriveConfigChange}
-                      placeholder="1A2B3C4D5E6F7G8H9I0J"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Se encuentra en la URL de la carpeta: https://drive.google.com/drive/folders/<span className="font-medium">ID</span>
-                    </p>
+              {simpleMode ? (
+                <form onSubmit={handleSaveSimpleDriveUrl}>
+                  <div className="space-y-4">
+                    <Alert className="bg-green-50 border-green-200 text-green-800 mb-6">
+                      <AlertDescription className="flex items-start">
+                        <i className="fa-solid fa-info-circle mt-0.5 mr-3"></i>
+                        <div>
+                          <p className="font-medium">Modo Simple Activado</p>
+                          <p className="text-sm mt-1">
+                            No necesita crear un proyecto en Google Cloud Console. 
+                            Simplemente proporcione la URL completa de su carpeta de Google Drive y 
+                            asegúrese de que esté compartida con acceso público o con cualquier persona que tenga el enlace.
+                          </p>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="simpleDriveUrl">URL de Google Drive</Label>
+                      <Input 
+                        id="simpleDriveUrl"
+                        value={simpleDriveUrl}
+                        onChange={handleSimpleDriveUrlChange}
+                        placeholder="https://drive.google.com/drive/folders/1A2B3C4D5E6F7G8H9I0J"
+                      />
+                      <p className="text-sm text-gray-500">
+                        URL completa de su carpeta de Google Drive
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="mt-2"
+                      disabled={saveSimpleDriveMutation.isPending}
+                    >
+                      {saveSimpleDriveMutation.isPending ? 'Guardando...' : 'Guardar URL de Carpeta'}
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="driveClientEmail">Email de Cuenta de Servicio</Label>
-                    <Input 
-                      id="driveClientEmail"
-                      name="clientEmail"
-                      value={driveConfig.clientEmail}
-                      onChange={handleDriveConfigChange}
-                      placeholder="proyecto-123456@proyecto.iam.gserviceaccount.com"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Email de la cuenta de servicio de Google Cloud
-                    </p>
+                </form>
+              ) : (
+                <form onSubmit={handleSaveDriveConfig}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="folderId">ID de la Carpeta</Label>
+                      <Input 
+                        id="folderId"
+                        name="folderId"
+                        value={driveConfig.folderId}
+                        onChange={handleDriveConfigChange}
+                        placeholder="1A2B3C4D5E6F7G8H9I0J"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Se encuentra en la URL de la carpeta: https://drive.google.com/drive/folders/<span className="font-medium">ID</span>
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="driveClientEmail">Email de Cuenta de Servicio</Label>
+                      <Input 
+                        id="driveClientEmail"
+                        name="clientEmail"
+                        value={driveConfig.clientEmail}
+                        onChange={handleDriveConfigChange}
+                        placeholder="proyecto-123456@proyecto.iam.gserviceaccount.com"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Email de la cuenta de servicio de Google Cloud
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="drivePrivateKey">Clave Privada</Label>
+                      <Input 
+                        id="drivePrivateKey"
+                        name="privateKey"
+                        value={driveConfig.privateKey}
+                        onChange={handleDriveConfigChange}
+                        placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Clave privada de la cuenta de servicio (desde archivo JSON)
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className="mt-2"
+                      disabled={saveDriveMutation.isPending}
+                    >
+                      {saveDriveMutation.isPending ? 'Guardando...' : 'Guardar Configuración'}
+                    </Button>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="drivePrivateKey">Clave Privada</Label>
-                    <Input 
-                      id="drivePrivateKey"
-                      name="privateKey"
-                      value={driveConfig.privateKey}
-                      onChange={handleDriveConfigChange}
-                      placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-                    />
-                    <p className="text-sm text-gray-500">
-                      Clave privada de la cuenta de servicio (desde archivo JSON)
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="mt-2"
-                    disabled={saveDriveMutation.isPending}
-                  >
-                    {saveDriveMutation.isPending ? 'Guardando...' : 'Guardar Configuración'}
-                  </Button>
-                </div>
-              </form>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -407,13 +528,27 @@ export default function GoogleSheetsAdmin() {
             <AlertDescription className="flex items-start">
               <i className="fa-solid fa-info-circle mt-0.5 mr-3"></i>
               <div>
-                <p className="font-medium">Cómo obtener credenciales</p>
-                <ol className="list-decimal list-inside text-sm mt-1 space-y-1">
-                  <li>Cree un proyecto en <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google Cloud Console</a></li>
-                  <li>Habilite las APIs de Google Sheets y Google Drive</li>
-                  <li>Cree una cuenta de servicio y descargue la clave JSON</li>
-                  <li>Comparta su hoja/carpeta con el email de la cuenta de servicio</li>
-                </ol>
+                {simpleMode ? (
+                  <>
+                    <p className="font-medium">Modo Simple - Configuración rápida</p>
+                    <ol className="list-decimal list-inside text-sm mt-1 space-y-1">
+                      <li>Cree una hoja de cálculo en <a href="https://docs.google.com/spreadsheets" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google Sheets</a></li>
+                      <li>Haga clic en "Compartir" en la esquina superior derecha</li>
+                      <li>Seleccione "Cualquier persona con el enlace puede ver"</li>
+                      <li>Copie la URL completa y péguela en el campo de arriba</li>
+                    </ol>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium">Modo Avanzado - Cómo obtener credenciales</p>
+                    <ol className="list-decimal list-inside text-sm mt-1 space-y-1">
+                      <li>Cree un proyecto en <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google Cloud Console</a></li>
+                      <li>Habilite las APIs de Google Sheets y Google Drive</li>
+                      <li>Cree una cuenta de servicio y descargue la clave JSON</li>
+                      <li>Comparta su hoja/carpeta con el email de la cuenta de servicio</li>
+                    </ol>
+                  </>
+                )}
               </div>
             </AlertDescription>
           </Alert>
