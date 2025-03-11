@@ -133,3 +133,32 @@ export const insertBrandSettingsSchema = createInsertSchema(brandSettings).pick(
 
 export type InsertBrandSettings = z.infer<typeof insertBrandSettingsSchema>;
 export type BrandSettings = typeof brandSettings.$inferSelect;
+
+// QR Scan Logs Schema
+export const qrScanLogs = pgTable("qr_scan_logs", {
+  id: serial("id").primaryKey(),
+  qrCode: text("qr_code").notNull(),
+  userId: integer("user_id"),
+  productId: integer("product_id"),
+  scanDate: timestamp("scan_date").notNull().defaultNow(),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
+  deviceInfo: text("device_info"),
+  successful: boolean("successful").notNull().default(true),
+  scanContext: text("scan_context"),
+});
+
+export const insertQrScanLogSchema = createInsertSchema(qrScanLogs).pick({
+  qrCode: true,
+  userId: true,
+  productId: true,
+  scanDate: true,
+  latitude: true,
+  longitude: true,
+  deviceInfo: true,
+  successful: true,
+  scanContext: true,
+});
+
+export type InsertQrScanLog = z.infer<typeof insertQrScanLogSchema>;
+export type QrScanLog = typeof qrScanLogs.$inferSelect;
