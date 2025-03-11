@@ -436,7 +436,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
               alt="QR Code 2" 
               className="w-16 h-16 object-contain"
             />
-            <span className="text-sm text-gray-600">Pan Baguette</span>
+            <span className="text-sm text-gray-600">Ensalada Fresca</span>
           </Button>
           
           <Button 
@@ -449,7 +449,7 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
               alt="QR Code 3" 
               className="w-16 h-16 object-contain"
             />
-            <span className="text-sm text-gray-600">Yogurt Natural</span>
+            <span className="text-sm text-gray-600">Pizza Artesanal</span>
           </Button>
         </div>
       </div>
