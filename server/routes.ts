@@ -495,6 +495,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a user (admin access required)
+  app.delete("/api/users/:id", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = parseInt(id);
+      
+      // Get user to check if it's an admin
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't allow deleting admin users
+      if (user.isAdmin) {
+        return res.status(403).json({ message: "Cannot delete admin users" });
+      }
+      
+      const result = await storage.deleteUser(userId);
+      if (!result) {
+        return res.status(404).json({ message: "Failed to delete user" });
+      }
+      
+      res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+  
   // Get all orders for admin
   app.get("/api/admin/orders", checkAdminAccess, async (_req: Request, res: Response) => {
     try {
