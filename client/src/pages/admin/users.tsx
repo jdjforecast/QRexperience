@@ -45,6 +45,7 @@ export default function AdminUsers() {
     coins: 100,
     isAdmin: false
   });
+  const [newUserPassword, setNewUserPassword] = useState<string>("");
 
   // Consulta para obtener usuarios
   const { data: users = [], isLoading, error } = useQuery<User[]>({
@@ -190,6 +191,7 @@ export default function AdminUsers() {
       coins: 100,
       isAdmin: false
     });
+    setNewUserPassword("");
     setFormErrors({});
   };
   
@@ -207,8 +209,25 @@ export default function AdminUsers() {
   // Enviar formulario para crear usuario
   const handleCreateUserSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Si es admin, la contraseña es obligatoria
+    if (newUser.isAdmin && !newUserPassword.trim()) {
+      toast({
+        title: "Error en el formulario",
+        description: "La contraseña es obligatoria para usuarios administradores.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (validateForm()) {
-      createUserMutation.mutate(newUser);
+      // Incluir la contraseña en la petición si existe
+      const userData = {
+        ...newUser,
+        password: newUserPassword.trim() || undefined
+      };
+      
+      createUserMutation.mutate(userData);
     }
   };
   
@@ -242,6 +261,12 @@ export default function AdminUsers() {
     if (selectedUser) {
       updateCoinsMutation.mutate({ userId: selectedUser.id, newAmount: newCoinsAmount });
     }
+  };
+  
+  // Resetear todos los formularios
+  const resetAllForms = () => {
+    resetUserForm();
+    setNewUserPassword("");
   };
 
   // Restablecer monedas a 0
@@ -422,6 +447,45 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
       
+      {/* Modal para cambiar contraseña */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Cambiar Contraseña</DialogTitle>
+            <DialogDescription>
+              Establezca una nueva contraseña para {selectedUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordSubmit}>
+            <div className="py-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Nueva Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsPasswordDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updatePasswordMutation.isPending}>
+                {updatePasswordMutation.isPending ? "Actualizando..." : "Actualizar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
       {/* Modal para añadir usuario */}
       <Dialog open={isAddUserDialogOpen} onOpenChange={(open) => {
         setIsAddUserDialogOpen(open);
@@ -509,6 +573,25 @@ export default function AdminUsers() {
                   onChange={handleInputChange}
                   required
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="newUserPassword">Contraseña</Label>
+                <Input
+                  id="newUserPassword"
+                  type="password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  placeholder="Contraseña para el usuario"
+                  autoComplete="new-password"
+                  required={newUser.isAdmin}
+                />
+                {newUser.isAdmin && !newUserPassword && (
+                  <p className="text-sm text-amber-600">
+                    <i className="fa-solid fa-info-circle mr-1"></i>
+                    La contraseña es requerida para usuarios administradores
+                  </p>
+                )}
               </div>
               
               <div className="flex items-center space-x-2">
