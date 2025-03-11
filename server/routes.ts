@@ -1,7 +1,16 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupGoogleSheetsConnection } from "./googleSheets";
+import { 
+  setupGoogleSheetsConnection,
+  synchronizeWithGoogleSheets,
+  getGoogleConfig,
+  saveGoogleSheetsConfig,
+  saveGoogleDriveConfig,
+  getSyncStats,
+  GoogleSheetsConfig,
+  GoogleDriveConfig
+} from "./googleSheets";
 import { z } from "zod";
 import { 
   insertUserSchema, 
@@ -384,6 +393,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(csv);
     } catch (error) {
       res.status(500).json({ message: "Failed to export orders to CSV" });
+    }
+  });
+  
+  // ==== Google Integration Routes ====
+  // Get Google configuration
+  app.get("/api/admin/google-config", checkAdminAccess, async (_req: Request, res: Response) => {
+    try {
+      const config = await getGoogleConfig();
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get Google configuration" });
+    }
+  });
+  
+  // Save Google Sheets configuration
+  app.post("/api/admin/google-sheets-config", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const config: GoogleSheetsConfig = req.body;
+      const updatedConfig = await saveGoogleSheetsConfig(config);
+      res.json(updatedConfig);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save Google Sheets configuration" });
+    }
+  });
+  
+  // Save Google Drive configuration
+  app.post("/api/admin/google-drive-config", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const config: GoogleDriveConfig = req.body;
+      const updatedConfig = await saveGoogleDriveConfig(config);
+      res.json(updatedConfig);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save Google Drive configuration" });
+    }
+  });
+  
+  // Get sync stats
+  app.get("/api/admin/sync-stats", checkAdminAccess, async (_req: Request, res: Response) => {
+    try {
+      const stats = await getSyncStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get sync stats" });
+    }
+  });
+  
+  // Trigger sync with Google Sheets manually
+  app.get("/api/admin/sync-sheets", checkAdminAccess, async (_req: Request, res: Response) => {
+    try {
+      // Sync users
+      const users = await storage.getAllUsers();
+      await synchronizeWithGoogleSheets('users', users);
+      
+      // Sync products
+      const products = await storage.getAllProducts();
+      await synchronizeWithGoogleSheets('products', products);
+      
+      // Sync orders
+      const orders = await storage.getAllOrders();
+      await synchronizeWithGoogleSheets('orders', orders);
+      
+      res.json({ message: "Synchronization completed successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to sync with Google Sheets" });
     }
   });
   
