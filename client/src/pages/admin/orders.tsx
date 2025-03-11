@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,13 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDate } from "@/lib/utils";
-import { Order, User, OrderItem } from "@/contexts/ShoppingContext";
+import { Order, User, OrderItem, Product } from "@/contexts/ShoppingContext";
 
 export default function AdminOrders() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderProducts, setOrderProducts] = useState<Record<number, Product>>({});
 
   // Consulta para obtener órdenes
   const { data: orders = [], isLoading: isLoadingOrders, error: ordersError } = useQuery<Order[]>({
@@ -23,6 +24,11 @@ export default function AdminOrders() {
   // Consulta para obtener usuarios (para mostrar nombres)
   const { data: users = [], isLoading: isLoadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ['/api/admin/users']
+  });
+  
+  // Consulta para obtener todos los productos
+  const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useQuery<Product[]>({
+    queryKey: ['/api/products']
   });
 
   // Función para obtener los items de una orden específica
@@ -36,6 +42,12 @@ export default function AdminOrders() {
     const user = users.find((user: User) => user.id === userId);
     return user ? user.name : `Usuario ${userId}`;
   };
+  
+  // Función para obtener el nombre del producto
+  const getProductName = (productId: number): string => {
+    const product = products.find((product) => product.id === productId);
+    return product ? product.name : `Producto #${productId}`;
+  };
 
   // Filtrar órdenes
   const filteredOrders = orders.filter((order: Order) => {
@@ -48,14 +60,28 @@ export default function AdminOrders() {
   // Mostrar detalles de la orden
   const handleViewOrderDetails = (order: Order) => {
     setSelectedOrder(order);
+    
+    // Cargar productos de esta orden
+    const productMap: Record<number, Product> = {};
+    const orderItems = getOrderItems(order.id);
+    
+    // Buscar cada producto en la lista de productos
+    orderItems.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (product) {
+        productMap[item.productId] = product;
+      }
+    });
+    
+    setOrderProducts(productMap);
     setIsDetailsDialogOpen(true);
   };
 
-  if (isLoadingOrders || isLoadingUsers) {
-    return <div className="py-8 text-center">Cargando órdenes...</div>;
+  if (isLoadingOrders || isLoadingUsers || isLoadingProducts) {
+    return <div className="py-8 text-center">Cargando datos...</div>;
   }
 
-  if (ordersError || usersError) {
+  if (ordersError || usersError || productsError) {
     return <div className="py-8 text-center text-red-600">Error al cargar datos</div>;
   }
 
@@ -179,7 +205,7 @@ export default function AdminOrders() {
                       {getOrderItems(selectedOrder.id).map((item: OrderItem) => {
                         return (
                           <tr key={item.id} className="border-t">
-                            <td className="p-2">{item.product?.name || `Producto #${item.productId}`}</td>
+                            <td className="p-2">{getProductName(item.productId)}</td>
                             <td className="p-2 text-right">{item.price} monedas</td>
                           </tr>
                         );
