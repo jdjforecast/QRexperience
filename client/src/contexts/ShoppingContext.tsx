@@ -67,6 +67,7 @@ export type BrandSettings = {
   fontFamily: string;
   borderRadius: string;
   enableAnimations: boolean;
+  saleImageUrl: string; // Nueva imagen para el banner "SALE"
 };
 
 type ShoppingContextType = {

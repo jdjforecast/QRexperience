@@ -6,10 +6,17 @@ import Header from "@/components/layout/header";
 import MobileNav from "@/components/layout/mobile-nav";
 import LiveCart from "@/components/live-cart";
 import { useShopping } from "@/contexts/ShoppingContext";
+import { useQuery } from "@tanstack/react-query";
+import { BrandSettings } from "@/contexts/ShoppingContext";
 
 export default function Home() {
   const [location, setLocation] = useLocation();
   const { user, setSelectedProduct } = useShopping();
+  
+  // Consulta para obtener la configuración de marca
+  const { data: brandSettings } = useQuery<BrandSettings>({
+    queryKey: ['/api/brand-settings']
+  });
   
   // If not logged in, redirect to welcome page
   useEffect(() => {
@@ -36,6 +43,17 @@ export default function Home() {
               ¡Bienvenido, {user.name.split(' ')[0]}!
             </h2>
           </div>
+          
+          {/* SALE Banner - Solo se muestra si hay una imagen configurada */}
+          {brandSettings?.saleImageUrl && (
+            <div className="mb-6 overflow-hidden rounded-lg shadow-md">
+              <img 
+                src={brandSettings.saleImageUrl} 
+                alt="Oferta Especial" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
           
           {/* Live Cart */}
           <LiveCart />

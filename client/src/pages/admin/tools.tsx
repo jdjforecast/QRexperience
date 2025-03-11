@@ -33,11 +33,13 @@ export default function AdminTools() {
     primaryColor: string;
     storeName: string;
     storeDescription: string;
+    saleImageUrl: string; // Agregamos campo para la imagen SALE
   }>({
     logoUrl: "",
     primaryColor: "#7c3aed",
     storeName: "",
-    storeDescription: ""
+    storeDescription: "",
+    saleImageUrl: "" // Valor inicial para la imagen SALE
   });
 
   // Consulta para obtener configuración de marca
@@ -52,7 +54,8 @@ export default function AdminTools() {
         logoUrl: data.logoUrl || "",
         primaryColor: data.primaryColor || "#7c3aed",
         storeName: data.storeName || "",
-        storeDescription: data.storeDescription || ""
+        storeDescription: data.storeDescription || "",
+        saleImageUrl: data.saleImageUrl || ""
       });
     }
   }, [data]);
@@ -363,6 +366,31 @@ export default function AdminTools() {
                     />
                   </div>
                 </div>
+              </div>
+              
+              {/* Campo para la imagen de SALE */}
+              <div className="space-y-2">
+                <Label htmlFor="saleImageUrl">URL de Imagen SALE (Banner Principal)</Label>
+                <Input
+                  id="saleImageUrl"
+                  name="saleImageUrl"
+                  placeholder="https://ejemplo.com/sale-banner.jpg"
+                  value={brandSettings.saleImageUrl}
+                  onChange={handleBrandInputChange}
+                />
+                {brandSettings.saleImageUrl && (
+                  <div className="mt-2 border rounded-md p-2">
+                    <p className="text-xs text-gray-500 mb-1">Vista previa:</p>
+                    <img 
+                      src={brandSettings.saleImageUrl} 
+                      alt="Banner SALE" 
+                      className="w-full h-auto rounded-md"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Esta imagen se mostrará en la página de inicio como banner promocional.
+                </p>
               </div>
             </div>
             <DialogFooter>
