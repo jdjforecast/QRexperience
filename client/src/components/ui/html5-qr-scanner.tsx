@@ -31,35 +31,7 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
     };
   }, [isScanning]);
   
-  // Simulador de escaneo para demostración de ejemplo
-  const simulateScan = (qrCode: string) => {
-    setScanSuccess(true);
-    
-    // Vibrar el dispositivo si está disponible
-    if (navigator.vibrate) {
-      navigator.vibrate(200);
-    }
-    
-    // Simular información del dispositivo
-    const deviceInfo = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      screenWidth: window.screen.width,
-      screenHeight: window.screen.height,
-      simulated: true
-    };
-    
-    // Simular ubicación (coordenadas de Madrid, España)
-    const simulatedLocation = {
-      latitude: 40.416775,
-      longitude: -3.703790
-    };
-    
-    setTimeout(() => {
-      setScanSuccess(false);
-      onScan(qrCode, simulatedLocation, deviceInfo);
-    }, 1000);
-  };
+  // La función para los ejemplos fue eliminada ya que solo queremos escaneo real
 
   // Maneja un escaneo exitoso
   const handleSuccessfulScan = async (qrCode: string) => {
@@ -117,7 +89,7 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
     setError(null);
     
     if (!isCameraSupported) {
-      setError("Tu dispositivo no soporta el acceso a la cámara. Usa los códigos de ejemplo.");
+      setError("Tu dispositivo no soporta el acceso a la cámara. Intenta con otro dispositivo que tenga cámara.");
       return;
     }
     
@@ -227,7 +199,7 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
           </div>
         </div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Escáner QR</h2>
-        <p className="text-gray-600">Escanea el código QR del producto o usa los ejemplos de abajo</p>
+        <p className="text-gray-600">Escanea el código QR del producto con la cámara</p>
       </div>
       
       <div className="relative mb-6 overflow-hidden rounded-lg shadow-md">
@@ -352,46 +324,11 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
         </div>
         
         <div className="mt-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Ejemplos de QR (haz clic para simular escaneo)</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <Button 
-              variant="outline"
-              className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center h-auto flex flex-col items-center gap-2" 
-              onClick={() => simulateScan("QRPROD001")}
-            >
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?data=QRPROD001&size=100x100" 
-                alt="QR Code 1" 
-                className="w-16 h-16 object-contain"
-              />
-              <span className="text-sm text-gray-600">Queso Fresco</span>
-            </Button>
-            
-            <Button 
-              variant="outline"
-              className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center h-auto flex flex-col items-center gap-2" 
-              onClick={() => simulateScan("QRPROD002")}
-            >
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?data=QRPROD002&size=100x100" 
-                alt="QR Code 2" 
-                className="w-16 h-16 object-contain"
-              />
-              <span className="text-sm text-gray-600">Ensalada Fresca</span>
-            </Button>
-            
-            <Button 
-              variant="outline"
-              className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 text-center h-auto flex flex-col items-center gap-2" 
-              onClick={() => simulateScan("QRPROD003")}
-            >
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?data=QRPROD003&size=100x100" 
-                alt="QR Code 3" 
-                className="w-16 h-16 object-contain"
-              />
-              <span className="text-sm text-gray-600">Pizza Artesanal</span>
-            </Button>
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Instrucciones</h3>
+          <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+            <p className="mb-2"><span className="font-bold">1.</span> Haz clic en "Iniciar Escáner" para activar la cámara.</p>
+            <p className="mb-2"><span className="font-bold">2.</span> Apunta la cámara al código QR de un producto.</p>
+            <p><span className="font-bold">3.</span> Mantén el código QR dentro del marco hasta que sea detectado.</p>
           </div>
         </div>
       </div>
