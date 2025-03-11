@@ -325,23 +325,7 @@ export default function AdminTools() {
           </CardContent>
         </Card>
 
-        {/* Gestión de usuarios */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Gestión de Usuarios</CardTitle>
-            <CardDescription>
-              Cree nuevos usuarios y administradores
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              className="w-full" 
-              onClick={() => setIsUserDialogOpen(true)}
-            >
-              Crear Nuevo Usuario
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Este panel ha sido eliminado para evitar redundancia */}
 
         {/* Lector de QR */}
         <Card>
