@@ -333,7 +333,7 @@ export default function ScanLogs() {
                   <td className="p-3 align-top whitespace-nowrap">{formatDate(new Date(log.scanDate))}</td>
                   <td className="p-3 align-top">
                     {log.successful ? (
-                      <Badge variant="success" className="bg-green-100 text-green-800">Exitoso</Badge>
+                      <Badge className="bg-green-100 text-green-800">Exitoso</Badge>
                     ) : (
                       <Badge variant="destructive" className="bg-red-100 text-red-800">Fallido</Badge>
                     )}

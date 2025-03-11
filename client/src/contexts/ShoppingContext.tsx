@@ -72,6 +72,19 @@ export type BrandSettings = {
   saleImageUrl: string; // Nueva imagen para el banner "SALE"
 };
 
+export type QrScanLog = {
+  id: number;
+  qrCode: string;
+  userId: number | null;
+  productId: number | null;
+  scanDate: Date | string;
+  latitude: number | null;
+  longitude: number | null;
+  deviceInfo: string | null;
+  successful: boolean;
+  scanContext: string | null;
+};
+
 type ShoppingContextType = {
   user: User | null;
   products: Product[];

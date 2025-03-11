@@ -15,6 +15,7 @@ const AdminOrders = lazy(() => import("./orders"));
 const AdminTools = lazy(() => import("./tools"));
 const GoogleSheetsAdmin = lazy(() => import("./google-sheets"));
 const UserManual = lazy(() => import("./manual"));
+const ScanLogs = lazy(() => import("./scan-logs"));
 
 // Componente para el estado de carga
 const LoadingComponent = () => (
@@ -107,6 +108,12 @@ export default function AdminDashboard() {
                   Órdenes
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="scanlogs" 
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                >
+                  Escaneos QR
+                </TabsTrigger>
+                <TabsTrigger 
                   value="tools" 
                   className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
@@ -163,6 +170,14 @@ export default function AdminDashboard() {
                   <Suspense fallback={<LoadingComponent />}>
                     <div className="overflow-x-auto">
                       <GoogleSheetsAdmin />
+                    </div>
+                  </Suspense>
+                </TabsContent>
+                
+                <TabsContent value="scanlogs">
+                  <Suspense fallback={<LoadingComponent />}>
+                    <div className="overflow-x-auto">
+                      <ScanLogs />
                     </div>
                   </Suspense>
                 </TabsContent>
