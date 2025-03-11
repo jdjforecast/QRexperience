@@ -112,6 +112,9 @@ export const brandSettings = pgTable("brand_settings", {
   fontFamily: text("font_family").default("Inter").notNull(),
   borderRadius: text("border_radius").default("0.5rem").notNull(),
   enableAnimations: boolean("enable_animations").default(true).notNull(),
+  storeName: text("store_name").default("Mi Tienda").notNull(),
+  storeDescription: text("store_description").default("Descripción de la tienda").notNull(),
+  saleImageUrl: text("sale_image_url").default("").notNull(),
 });
 
 export const insertBrandSettingsSchema = createInsertSchema(brandSettings).pick({
@@ -123,6 +126,9 @@ export const insertBrandSettingsSchema = createInsertSchema(brandSettings).pick(
   fontFamily: true,
   borderRadius: true,
   enableAnimations: true,
+  storeName: true,
+  storeDescription: true,
+  saleImageUrl: true,
 });
 
 export type InsertBrandSettings = z.infer<typeof insertBrandSettingsSchema>;

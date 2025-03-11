@@ -73,7 +73,17 @@ export default function AdminTools() {
   // Mutación para actualizar configuración de marca
   const updateBrandMutation = useMutation({
     mutationFn: async (settings: typeof brandSettings) => {
-      const res = await apiRequest('POST', '/api/brand-settings', settings);
+      // Agregar valores predeterminados para los campos requeridos por el schema
+      const completeSettings = {
+        ...settings,
+        welcomeImageUrl: settings.welcomeImageUrl || "https://cdn-icons-png.flaticon.com/512/2331/2331966.png",
+        secondaryColor: "#10b981",
+        language: "es",
+        fontFamily: "Inter",
+        borderRadius: "0.5rem",
+        enableAnimations: true
+      };
+      const res = await apiRequest('POST', '/api/brand-settings', completeSettings);
       return res.json();
     },
     onSuccess: () => {

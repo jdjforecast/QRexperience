@@ -458,7 +458,10 @@ export class MemStorage implements IStorage {
       language: settings.language || "es",
       fontFamily: settings.fontFamily || "Inter",
       borderRadius: settings.borderRadius || "0.5rem",
-      enableAnimations: settings.enableAnimations !== undefined ? settings.enableAnimations : true
+      enableAnimations: settings.enableAnimations !== undefined ? settings.enableAnimations : true,
+      storeName: settings.storeName || "Mi Tienda",
+      storeDescription: settings.storeDescription || "Descripción de la tienda",
+      saleImageUrl: settings.saleImageUrl || ""
     };
     
     if (existingSettings) {
