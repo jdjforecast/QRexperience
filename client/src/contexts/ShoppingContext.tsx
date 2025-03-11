@@ -34,6 +34,7 @@ export type Product = {
   description: string;
   imageUrl: string;
   qrCode: string;
+  stock: number;
 };
 
 export type CartItem = Product;
@@ -269,13 +270,49 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
   
+  // Update product stock mutation
+  const updateProductStockMutation = useMutation({
+    mutationFn: async ({ productId, newStock }: { productId: number, newStock: number }) => {
+      const res = await apiRequest('PATCH', `/api/products/${productId}/stock`, { stock: newStock });
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate products query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al actualizar stock",
+        description: error.message || "Ocurrió un error al actualizar el stock del producto.",
+        variant: "destructive",
+      });
+    }
+  });
+  
   // Add product to cart
   const addToCart = (product: Product) => {
     // Check if product can be added
     if (!canAddToCart(product)) return;
     
+    // Check if product has stock
+    if (product.stock <= 0) {
+      toast({
+        title: "Producto sin stock",
+        description: `${product.name} no tiene unidades disponibles.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Add to cart
     setCart([...cart, product]);
+    
+    // Update stock in the backend
+    const newStock = product.stock - 1;
+    updateProductStockMutation.mutate({ 
+      productId: product.id, 
+      newStock 
+    });
     
     // Trigger coin animation
     if (user) {
@@ -295,6 +332,16 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
     if (!productToRemove) return;
     
     setCart(cart.filter(p => p.id !== productId));
+    
+    // Restaurar el stock del producto
+    const currentProduct = products.find(p => p.id === productId);
+    if (currentProduct) {
+      const newStock = currentProduct.stock + 1;
+      updateProductStockMutation.mutate({ 
+        productId, 
+        newStock 
+      });
+    }
     
     // Trigger coin animation
     if (user) {

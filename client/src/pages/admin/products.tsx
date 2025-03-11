@@ -26,6 +26,7 @@ interface ProductFormData {
   description: string;
   imageUrl: string;
   qrCode?: string;
+  stock: number;
 }
 
 export default function AdminProducts() {
@@ -41,6 +42,7 @@ export default function AdminProducts() {
     price: 0,
     description: "",
     imageUrl: "",
+    stock: 100,
   });
   const [isQRDialogOpen, setIsQRDialogOpen] = useState(false);
   const [selectedProductQR, setSelectedProductQR] = useState<Product | null>(null);
@@ -178,6 +180,7 @@ export default function AdminProducts() {
       description: product.description,
       imageUrl: product.imageUrl,
       qrCode: product.qrCode,
+      stock: product.stock || 100, // Usamos el stock del producto o un valor predeterminado
     });
     setIsEditDialogOpen(true);
   };
@@ -203,6 +206,7 @@ export default function AdminProducts() {
       price: 0,
       description: "",
       imageUrl: "",
+      stock: 100, // Valor predeterminado para stock
     });
     setProductToEdit(null);
   };
