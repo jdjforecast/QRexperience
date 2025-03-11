@@ -238,7 +238,8 @@ export class MemStorage implements IStorage {
       id, 
       company: insertUser.company,
       coins: insertUser.coins || 100,
-      isAdmin: insertUser.isAdmin || false
+      isAdmin: insertUser.isAdmin || false,
+      password: insertUser.password || null
     };
     this.users.set(id, user);
     
@@ -505,7 +506,14 @@ export class MemStorage implements IStorage {
     const qrScanLog: QrScanLog = {
       ...scanLog,
       id,
-      scanDate: scanLog.scanDate || new Date()
+      userId: scanLog.userId || null,
+      productId: scanLog.productId || null,
+      scanDate: scanLog.scanDate || new Date(),
+      latitude: scanLog.latitude || null,
+      longitude: scanLog.longitude || null,
+      deviceInfo: scanLog.deviceInfo || null,
+      successful: scanLog.successful !== undefined ? scanLog.successful : true,
+      scanContext: scanLog.scanContext || null
     };
     this.qrScanLogs.set(id, qrScanLog);
     
@@ -540,7 +548,7 @@ export class MemStorage implements IStorage {
   
   async getProductScanStats(productId: number): Promise<{ totalScans: number, uniqueUsers: number }> {
     const logs = Array.from(this.qrScanLogs.values()).filter(
-      log => log.productId === productId && log.successful
+      log => log.productId === productId && log.successful === true
     );
     
     const uniqueUserSet = new Set<number>();
