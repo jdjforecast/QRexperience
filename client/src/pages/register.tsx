@@ -13,6 +13,7 @@ interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
+  company?: string;
 }
 
 export default function Register() {
@@ -24,6 +25,7 @@ export default function Register() {
     name: "",
     email: "",
     phone: "",
+    company: "",
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -46,6 +48,10 @@ export default function Register() {
       newErrors.phone = "El teléfono es obligatorio";
     } else if (!isValidPhone(formData.phone)) {
       newErrors.phone = "El formato del teléfono no es válido";
+    }
+    
+    if (!formData.company.trim()) {
+      newErrors.company = "La empresa es obligatoria";
     }
     
     setErrors(newErrors);
@@ -158,6 +164,25 @@ export default function Register() {
                     />
                     {errors.phone && (
                       <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="company" className="text-sm font-medium text-gray-700 mb-1">
+                      Empresa
+                    </Label>
+                    <Input
+                      type="text"
+                      id="company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      placeholder="Nombre de tu empresa"
+                      className={errors.company ? "border-red-500 focus:ring-red-500" : ""}
+                      required
+                    />
+                    {errors.company && (
+                      <p className="mt-1 text-sm text-red-500">{errors.company}</p>
                     )}
                   </div>
                   

@@ -8,6 +8,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
+  company: text("company").notNull(),
   coins: integer("coins").notNull().default(100),
   isAdmin: boolean("is_admin").default(false).notNull(),
 });
@@ -16,6 +17,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,
   phone: true,
+  company: true,
   coins: true,
   isAdmin: true,
 });
