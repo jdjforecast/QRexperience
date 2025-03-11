@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "client/dist",
+  "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
@@ -20,7 +20,7 @@
       }
     },
     {
-      "src": "client/package.json",
+      "src": "client/index.html",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist",
@@ -38,7 +38,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "client/dist/index.html"
+      "dest": "dist/index.html"
     }
   ]
 }

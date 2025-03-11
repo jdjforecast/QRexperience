@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,11 +10,13 @@ export default defineConfig({
       '/api': 'http://localhost:5000'
     }
   },
+  root: 'client', // Especificar el directorio raíz donde se encuentra index.html
   build: {
-    outDir: 'dist',
+    outDir: '../dist', // Ajustado para que esté relativo a root
     // Specify ESM for Netlify to support top-level await
     target: 'esnext',
     rollupOptions: {
+      input: resolve(__dirname, 'client/index.html'), // Ruta explícita al index.html
       output: {
         format: 'esm',
         entryFileNames: 'assets/[name].[hash].js',

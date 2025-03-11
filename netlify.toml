@@ -1,6 +1,6 @@
 [build]
   command = "npx vite build --config vite.netlify.config.js"
-  publish = "client/dist"
+  publish = "dist"
   functions = "server"
 
 [functions]

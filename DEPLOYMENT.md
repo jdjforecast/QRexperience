@@ -35,9 +35,12 @@ La aplicación registra datos de ubicación con los escaneos QR (si el usuario l
 
 #### Solución a problemas comunes en Netlify
 
-Si encuentras errores relacionados con **"top-level await"** o **"resolver packages"**, la configuración especial en los archivos `netlify.toml` y `vite.netlify.config.js` debería resolverlos:
+Si encuentras errores relacionados con **"top-level await"**, **"resolver packages"** o **"cannot resolve module 'index.html'"**, la configuración especial en los archivos `netlify.toml` y `vite.netlify.config.js` debería resolverlos:
 
 - El archivo `vite.netlify.config.js` configura Vite para usar formato ESM en lugar de CJS
+- Se especifica explícitamente la ruta al archivo `index.html` como punto de entrada
+- Se define correctamente el directorio raíz (`root`) donde se encuentra el archivo `index.html`
+- El directorio de salida (`outDir`) está configurado para ser relativo al directorio raíz
 - Se han marcado como externos los paquetes problemáticos (`@babel/preset-typescript` y `lightningcss`)
 - La configuración de Node está establecida en versión 18 para compatibilidad óptima
 
