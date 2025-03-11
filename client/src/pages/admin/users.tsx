@@ -32,7 +32,9 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newCoinsAmount, setNewCoinsAmount] = useState<number>(0);
+  const [newPassword, setNewPassword] = useState<string>("");
   const [isCoinsDialogOpen, setIsCoinsDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [newUser, setNewUser] = useState<UserFormData>({
@@ -113,6 +115,30 @@ export default function AdminUsers() {
       toast({
         title: "Error",
         description: error.message || "No se pudo eliminar el usuario.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutación para actualizar la contraseña
+  const updatePasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: number, password: string }) => {
+      const res = await apiRequest('PATCH', `/api/users/${userId}/password`, { password });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsPasswordDialogOpen(false);
+      setNewPassword("");
+      toast({
+        title: "Contraseña actualizada",
+        description: "La contraseña ha sido actualizada exitosamente.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar la contraseña.",
         variant: "destructive",
       });
     }
@@ -224,6 +250,21 @@ export default function AdminUsers() {
       updateCoinsMutation.mutate({ userId: user.id, newAmount: 0 });
     }
   };
+  
+  // Abrir modal para cambiar contraseña
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword("");
+    setIsPasswordDialogOpen(true);
+  };
+  
+  // Manejar envío del formulario de contraseña
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser && newPassword.trim()) {
+      updatePasswordMutation.mutate({ userId: selectedUser.id, password: newPassword });
+    }
+  };
 
   if (isLoading) {
     return <div className="py-8 text-center">Cargando usuarios...</div>;
@@ -308,6 +349,13 @@ export default function AdminUsers() {
                           onClick={() => handleResetCoins(user)}
                         >
                           Resetear Monedas
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleChangePassword(user)}
+                        >
+                          Cambiar Contraseña
                         </Button>
                         <Button 
                           variant="destructive" 
