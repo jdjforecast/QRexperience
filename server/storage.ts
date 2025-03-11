@@ -3,6 +3,7 @@ import { products, type Product, type InsertProduct } from "@shared/schema";
 import { orders, type Order, type InsertOrder } from "@shared/schema";
 import { orderItems, type OrderItem, type InsertOrderItem } from "@shared/schema";
 import { brandSettings, type BrandSettings, type InsertBrandSettings } from "@shared/schema";
+import { qrScanLogs, type QrScanLog, type InsertQrScanLog } from "@shared/schema";
 import { synchronizeWithGoogleSheets, getGoogleConfig } from "./googleSheets";
 
 // Storage interface
@@ -27,6 +28,7 @@ export interface IStorage {
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   updateProductStock(id: number, newStock: number): Promise<Product | undefined>;
   exportProductsToCSV(): Promise<string>;
+  generateQrCodeForProduct(productId: number): Promise<string>;
   
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
@@ -43,6 +45,12 @@ export interface IStorage {
   // Brand settings operations
   getBrandSettings(): Promise<BrandSettings | undefined>;
   createOrUpdateBrandSettings(settings: InsertBrandSettings): Promise<BrandSettings>;
+  
+  // QR scan log operations
+  logQrScan(scanLog: InsertQrScanLog): Promise<QrScanLog>;
+  getQrScanLogs(qrCode?: string, userId?: number): Promise<QrScanLog[]>;
+  getQrScanLog(id: number): Promise<QrScanLog | undefined>;
+  getProductScanStats(productId: number): Promise<{ totalScans: number, uniqueUsers: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -51,12 +59,14 @@ export class MemStorage implements IStorage {
   private orders: Map<number, Order>;
   private orderItems: Map<number, OrderItem>;
   private brandSettings: Map<number, BrandSettings>;
+  private qrScanLogs: Map<number, QrScanLog>;
   
   private userId: number;
   private productId: number;
   private orderId: number;
   private orderItemId: number;
   private brandSettingsId: number;
+  private qrScanLogId: number;
 
   constructor() {
     this.users = new Map();
@@ -64,12 +74,14 @@ export class MemStorage implements IStorage {
     this.orders = new Map();
     this.orderItems = new Map();
     this.brandSettings = new Map();
+    this.qrScanLogs = new Map();
     
     this.userId = 1;
     this.productId = 1;
     this.orderId = 1;
     this.orderItemId = 1;
     this.brandSettingsId = 1;
+    this.qrScanLogId = 1;
     
     // Initialize with some sample products
     this.initializeProducts();
@@ -485,6 +497,83 @@ export class MemStorage implements IStorage {
       await synchronizeWithGoogleSheets('brandSettings', Array.from(this.brandSettings.values()));
       return newSettings;
     }
+  }
+  
+  // QR scan log operations
+  async logQrScan(scanLog: InsertQrScanLog): Promise<QrScanLog> {
+    const id = this.qrScanLogId++;
+    const qrScanLog: QrScanLog = {
+      ...scanLog,
+      id,
+      scanDate: scanLog.scanDate || new Date()
+    };
+    this.qrScanLogs.set(id, qrScanLog);
+    
+    // No synchronizamos con Google Sheets para evitar exceso de datos
+    // Los logs son principalmente para analíticas internas
+    
+    return qrScanLog;
+  }
+  
+  async getQrScanLogs(qrCode?: string, userId?: number): Promise<QrScanLog[]> {
+    let logs = Array.from(this.qrScanLogs.values());
+    
+    if (qrCode) {
+      logs = logs.filter(log => log.qrCode === qrCode);
+    }
+    
+    if (userId) {
+      logs = logs.filter(log => log.userId === userId);
+    }
+    
+    // Ordenar por fecha de escaneo, más reciente primero
+    return logs.sort((a, b) => {
+      const dateA = a.scanDate instanceof Date ? a.scanDate : new Date(a.scanDate);
+      const dateB = b.scanDate instanceof Date ? b.scanDate : new Date(b.scanDate);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }
+  
+  async getQrScanLog(id: number): Promise<QrScanLog | undefined> {
+    return this.qrScanLogs.get(id);
+  }
+  
+  async getProductScanStats(productId: number): Promise<{ totalScans: number, uniqueUsers: number }> {
+    const logs = Array.from(this.qrScanLogs.values()).filter(
+      log => log.productId === productId && log.successful
+    );
+    
+    const uniqueUserSet = new Set<number>();
+    logs.forEach(log => {
+      if (log.userId) {
+        uniqueUserSet.add(log.userId);
+      }
+    });
+    
+    return {
+      totalScans: logs.length,
+      uniqueUsers: uniqueUserSet.size
+    };
+  }
+  
+  async generateQrCodeForProduct(productId: number): Promise<string> {
+    const product = await this.getProduct(productId);
+    if (!product) {
+      throw new Error(`Producto con ID ${productId} no encontrado`);
+    }
+    
+    // Si ya tiene un código QR, lo devolvemos
+    if (product.qrCode) {
+      return product.qrCode;
+    }
+    
+    // Si no, generamos uno nuevo
+    const qrCode = `QRPROD${String(productId).padStart(3, '0')}`;
+    
+    // Actualizamos el producto con el nuevo código
+    await this.updateProduct(productId, { qrCode });
+    
+    return qrCode;
   }
 }
 
