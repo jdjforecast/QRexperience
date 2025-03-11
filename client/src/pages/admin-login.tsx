@@ -22,28 +22,18 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      // For demo purposes, we'll use a simple validation
-      // In a real app, we would call an API endpoint
-      if (email === "admin@example.com" && password === "admin123") {
-        await adminLogin();
-        toast({
-          title: t("admin.login.success"),
-          description: t("admin.login.success.desc"),
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: t("admin.login.failed"),
-          description: t("admin.login.failed.desc"),
-          variant: "destructive",
-        });
-      }
+      // Llamamos al endpoint de autenticación con las credenciales
+      await adminLogin(email, password);
+      // Si no hay errores, redirigimos al panel de administración
+      navigate("/admin");
     } catch (error) {
+      // En caso de error, mostramos un mensaje
       toast({
-        title: t("admin.login.error"),
-        description: t("admin.login.error.desc"),
+        title: t("admin.login.failed"),
+        description: t("admin.login.failed.desc"),
         variant: "destructive",
       });
+      console.error("Error de inicio de sesión:", error);
     } finally {
       setLoading(false);
     }

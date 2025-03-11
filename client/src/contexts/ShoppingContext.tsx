@@ -23,6 +23,7 @@ export type User = {
   company: string;
   coins: number;
   isAdmin: boolean;
+  password?: string; // Agregamos campo de contraseña
 };
 
 export type Product = {
@@ -78,7 +79,7 @@ type ShoppingContextType = {
   setSelectedProduct: (product: Product | null) => void;
   lastOrder: Order | null;
   registerUser: (userData: { name: string; email: string; phone: string; company: string }) => Promise<void>;
-  adminLogin: () => Promise<void>;
+  adminLogin: (email?: string, password?: string) => Promise<void>;
   logout: () => void;
   addToCart: (product: Product) => void;
   removeFromCart: (productId: number) => void;
