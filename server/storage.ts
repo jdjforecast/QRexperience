@@ -12,6 +12,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCoins(userId: number, newCoinsAmount: number): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
   exportUsersToCSV(): Promise<string>;
   
@@ -222,6 +223,25 @@ export class MemStorage implements IStorage {
     // Synchronize with Google Sheets
     await synchronizeWithGoogleSheets('users', Array.from(this.users.values()));
     return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    // Check if user exists
+    const user = await this.getUser(id);
+    if (!user) return false;
+    
+    // Don't allow deleting admin users to prevent locking out
+    if (user.isAdmin) return false;
+    
+    // Delete the user
+    const result = this.users.delete(id);
+    
+    // Synchronize with Google Sheets
+    if (result) {
+      await synchronizeWithGoogleSheets('users', Array.from(this.users.values()));
+    }
+    
+    return result;
   }
   
   async exportUsersToCSV(): Promise<string> {
