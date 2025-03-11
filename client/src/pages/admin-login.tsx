@@ -24,8 +24,13 @@ export default function AdminLogin() {
     try {
       // Llamamos al endpoint de autenticación con las credenciales
       await adminLogin(email, password);
-      // Si no hay errores, redirigimos al panel de administración
-      navigate("/admin");
+      
+      // Si llegamos aquí, es que la autenticación fue exitosa
+      console.log("Redirigiendo al panel de administración...");
+      // Pequeño retraso para asegurar que los estados se actualizan correctamente
+      setTimeout(() => {
+        navigate("/admin");
+      }, 100);
     } catch (error) {
       // En caso de error, mostramos un mensaje
       toast({

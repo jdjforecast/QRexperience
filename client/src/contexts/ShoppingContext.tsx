@@ -224,6 +224,11 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         }
         adminData = await res.json();
       }
+
+      // Verificar si el usuario es realmente administrador
+      if (!adminData.isAdmin) {
+        throw new Error("El usuario no tiene permisos de administrador");
+      }
       
       // Guardar el usuario en el estado y en localStorage
       setUser(adminData);
@@ -236,6 +241,8 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         title: t("admin.login.success"),
         description: t("admin.login.success.desc"),
       });
+      
+      return adminData; // Devolvemos los datos para que la página de login pueda redirigir
     } catch (error) {
       console.error("Admin login error:", error);
       toast({
