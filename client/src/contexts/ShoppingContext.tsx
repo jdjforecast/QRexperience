@@ -172,7 +172,6 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
     },
     onSuccess: (data) => {
       setLastOrder(data);
-      clearCart();
       
       // Update local user state with new coin balance
       if (user) {
@@ -180,11 +179,30 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
           ...user,
           coins: user.coins - getCartTotal()
         });
+        
+        // Confirmar la actualización de stock mediante API para cada producto en el carrito
+        // Esto garantiza que los stocks se actualicen correctamente después de completada la compra
+        Promise.all(
+          cart.map(product => {
+            // Aseguramos que el stock nunca sea negativo
+            const finalStock = Math.max(0, product.stock - 1);
+            return updateProductStockMutation.mutateAsync({
+              productId: product.id,
+              newStock: finalStock
+            });
+          })
+        ).then(() => {
+          // Invalidate relevant queries
+          queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+        });
       }
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      
+      // Limpiar carrito después de completar la orden
+      clearCart();
       
       toast({
         title: "¡Compra exitosa!",
