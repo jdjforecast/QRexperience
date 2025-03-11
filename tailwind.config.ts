@@ -79,10 +79,76 @@ export default {
             height: "0",
           },
         },
+        "scannerLine": {
+          "0%": {
+            top: "0%",
+          },
+          "50%": {
+            top: "100%",
+          },
+          "100%": {
+            top: "0%",
+          },
+        },
+        "scan": {
+          "0%": {
+            top: "-10%",
+          },
+          "50%": {
+            top: "100%",
+          },
+          "100%": {
+            top: "-10%",
+          },
+        },
+        "pulse": {
+          "0%": {
+            opacity: "0.6",
+            transform: "scale(1)",
+          },
+          "50%": {
+            opacity: "0",
+            transform: "scale(1.2)",
+          },
+          "100%": {
+            opacity: "0.6",
+            transform: "scale(1)",
+          },
+        },
+        "coin-bounce": {
+          "0%": {
+            transform: "translateY(0)",
+          },
+          "50%": {
+            transform: "translateY(-15px)",
+          },
+          "100%": {
+            transform: "translateY(0)",
+          },
+        },
+        "shine": {
+          "0%": {
+            transform: "translateX(-100%) rotate(45deg)",
+          },
+          "100%": {
+            transform: "translateX(100%) rotate(45deg)",
+          },
+        },
+        "float": {
+          "0%, 100%": {
+            transform: "translateY(0)",
+          },
+          "50%": {
+            transform: "translateY(-10px)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "coin-bounce": "coin-bounce 0.7s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
+        "shine": "shine 2s ease-in-out infinite",
       },
     },
   },

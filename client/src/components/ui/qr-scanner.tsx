@@ -157,27 +157,50 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       <div className="text-center mb-6">
+        <div className="flex items-center justify-center mb-3">
+          <div className="bg-primary/10 p-3 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9h6v6H3z"></path>
+              <path d="M9 3h6v6H9z"></path>
+              <path d="M15 9h6v6h-6z"></path>
+              <path d="M9 15h6v6H9z"></path>
+            </svg>
+          </div>
+        </div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Escáner QR</h2>
         <p className="text-gray-600">Escanea el código QR del producto o usa los ejemplos de abajo</p>
       </div>
       
-      <div className="relative mb-6 overflow-hidden rounded-lg">
+      <div className="relative mb-6 overflow-hidden rounded-lg shadow-md">
         {/* Contenedor para el escáner de QR */}
-        <div className="w-full h-64 bg-gray-900 rounded-lg relative overflow-hidden">
+        <div className="w-full h-64 bg-gradient-to-b from-gray-800 to-gray-950 rounded-lg relative overflow-hidden">
           {/* Div contenedor para la librería HTML5 QR Code Scanner */}
           <div 
             id={scannerContainerId} 
             className="w-full h-full absolute top-0 left-0"
           ></div>
           
-          {/* Los estilos personalizados se aplicarán mediante clases CSS */}
+          {/* Decoración de esquinas */}
+          <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-primary"></div>
+          <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-primary"></div>
+          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-primary"></div>
+          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-primary"></div>
           
           {/* Mensaje cuando no está escaneando */}
           {!isScanning && (
             <div className="h-full flex items-center justify-center flex-col text-center text-white relative z-10">
-              <i className="fa-solid fa-qrcode text-5xl mb-3"></i>
-              <p className="mb-2">Escaneo de códigos QR</p>
-              <p className="text-sm text-gray-400 px-4">Haz clic en "Iniciar Escáner" para usar la cámara</p>
+              <div className="relative mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-primary/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <rect x="7" y="7" width="3" height="3"></rect>
+                  <rect x="14" y="7" width="3" height="3"></rect>
+                  <rect x="7" y="14" width="3" height="3"></rect>
+                  <rect x="14" y="14" width="3" height="3"></rect>
+                </svg>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+              </div>
+              <p className="mb-2 font-medium text-white/90">Escaneo de códigos QR</p>
+              <p className="text-sm text-white/60 px-4 max-w-xs">Haz clic en "Iniciar Escáner" para usar la cámara</p>
             </div>
           )}
         </div>
@@ -186,19 +209,42 @@ export default function QRScanner({ onScan, onError, onClose }: QRScannerProps) 
         {isScanning && (
           <div className="absolute inset-0 pointer-events-none z-10">
             <div className="absolute inset-0 border-2 border-primary rounded-lg"></div>
-            <div className="absolute top-0 left-0 right-0 h-1 bg-primary animate-pulse"></div>
             
+            {/* Línea de escaneo animada */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary animate-[scannerLine_2s_ease-in-out_infinite]"></div>
+            
+            {/* Efecto de escaneo */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-48 h-48 border-2 border-dashed border-white/60 rounded-lg flex items-center justify-center">
-                <div className="text-white/80 text-sm text-center">
-                  <p>Centrando QR...</p>
+              <div className="relative">
+                {/* Marco de enfoque */}
+                <div className="w-56 h-56 border-2 border-white/80 rounded-lg flex items-center justify-center relative overflow-hidden">
+                  {/* Efecto de escaneo con gradiente */}
+                  <div className="absolute w-full h-12 bg-gradient-to-b from-primary/0 via-primary/30 to-primary/0 animate-[scan_2s_ease-in-out_infinite]"></div>
+                  
+                  {/* Esquinas decorativas del marco */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl"></div>
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr"></div>
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl"></div>
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br"></div>
+                  
+                  <div className="text-white/80 text-sm text-center max-w-[90%] bg-black/40 px-3 py-1 rounded backdrop-blur-sm">
+                    <p>Alinea el código QR en este marco</p>
+                  </div>
                 </div>
+                
+                {/* Pulsos de focalización */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 border border-primary/30 rounded-lg animate-[pulse_2s_ease-in-out_infinite]"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-primary/20 rounded-lg animate-[pulse_2s_ease-in-out_0.5s_infinite]"></div>
               </div>
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-white p-2 text-center text-sm">
+            {/* Barra de estado inferior */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/70 text-white py-2 px-4 text-center text-sm">
               <span className="flex items-center justify-center gap-2">
-                <i className="fa-solid fa-spinner fa-spin"></i>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
                 Escaneando...
               </span>
             </div>
