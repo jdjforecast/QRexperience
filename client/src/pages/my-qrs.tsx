@@ -17,12 +17,23 @@ export default function MyQRs() {
   const { user } = useShopping();
   const [, setLocation] = useLocation();
   
-  // Fetch user orders
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  // Fetch user orders with refetch interval and staleTime configuration
+  const { data: orders = [], isLoading, refetch } = useQuery<Order[]>({
     queryKey: [`/api/users/${user?.id}/orders`],
     queryFn: getQueryFn<Order[]>({ on401: "returnNull" }),
     enabled: !!user,
+    // Refetch every 5 seconds to ensure we have the latest orders
+    refetchInterval: 5000,
+    // Consider data fresh for 3 seconds
+    staleTime: 3000,
   });
+  
+  // Asegurarse de que tenemos los datos más recientes al entrar a la página
+  useEffect(() => {
+    if (user) {
+      refetch();
+    }
+  }, [user, refetch]);
   
   if (!user) {
     useEffect(() => {

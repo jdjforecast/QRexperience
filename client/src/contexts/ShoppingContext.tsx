@@ -199,7 +199,16 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      
+      // Asegurarse de que se invalidan todas las consultas relacionadas con órdenes
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      
+      // Invalida específicamente las órdenes del usuario actual
+      if (user?.id) {
+        queryClient.invalidateQueries({ 
+          queryKey: [`/api/users/${user.id}/orders`] 
+        });
+      }
       
       // Limpiar carrito después de completar la orden
       clearCart();
@@ -208,6 +217,11 @@ export const ShoppingProvider = ({ children }: { children: ReactNode }) => {
         title: "¡Compra exitosa!",
         description: `Tu pedido ha sido procesado. Recibirás tus productos con el código ${data.receiptCode}.`,
       });
+      
+      // Redirigir a la página de QRs después de una pequeña espera
+      setTimeout(() => {
+        window.location.href = "/my-qrs";
+      }, 1500);
     },
     onError: (error: any) => {
       toast({
