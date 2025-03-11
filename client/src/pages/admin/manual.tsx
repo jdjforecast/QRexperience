@@ -9,7 +9,7 @@ export default function UserManual() {
   const isMobile = useIsMobile();
   
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden">
+    <div className="space-y-6 max-w-full overflow-x-hidden max-h-[70vh] overflow-y-auto pr-2">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl md:text-3xl font-bold">Manual de Usuario</h1>
         <p className="text-muted-foreground text-sm md:text-base">Guía completa de todas las funcionalidades del sistema</p>
@@ -78,12 +78,12 @@ export default function UserManual() {
                 </AccordionItem>
 
                 <AccordionItem value="compras">
-                  <AccordionTrigger className="font-medium">
+                  <AccordionTrigger className="font-medium text-sm md:text-base py-3">
                     Realizando Compras
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-2">
+                  <AccordionContent className="space-y-2 text-xs md:text-sm">
                     <p>Para comprar productos con tus monedas virtuales:</p>
-                    <ol className="list-decimal ml-6 space-y-1">
+                    <ol className="list-decimal ml-4 md:ml-6 space-y-1">
                       <li>Después de escanear un producto, agrégalo al carrito</li>
                       <li>Puedes ver los productos en tu carrito pulsando el icono del carrito</li>
                       <li>Cuando estés listo, pulsa "Finalizar Compra" en el carrito</li>

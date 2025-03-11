@@ -72,94 +72,106 @@ export default function AdminDashboard() {
       </header>
 
       {/* Main content */}
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <Card className="shadow-md">
-          <CardHeader className="bg-gray-50 border-b">
-            <CardTitle>Dashboard de Administración</CardTitle>
-            <CardDescription>
+      <main className="flex-grow container mx-auto px-2 md:px-4 py-4 md:py-8">
+        <Card className="shadow-md overflow-hidden">
+          <CardHeader className="bg-gray-50 border-b p-3 md:p-6">
+            <CardTitle className="text-xl md:text-2xl">Dashboard de Administración</CardTitle>
+            <CardDescription className="text-sm">
               Gestione productos, usuarios, órdenes y configuraciones del sistema
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-hidden">
             <Tabs
               defaultValue="products"
               value={activeTab}
               onValueChange={setActiveTab}
               className="w-full"
             >
-              <TabsList className="w-full border-b bg-gray-50 rounded-none p-0">
+              <TabsList className="w-full border-b bg-gray-50 rounded-none p-0 flex flex-wrap overflow-x-auto">
                 <TabsTrigger 
                   value="products" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
                   Productos
                 </TabsTrigger>
                 <TabsTrigger 
                   value="users" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
                   Usuarios
                 </TabsTrigger>
                 <TabsTrigger 
                   value="orders" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
                   Órdenes
                 </TabsTrigger>
                 <TabsTrigger 
                   value="tools" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
                   Herramientas
                 </TabsTrigger>
                 <TabsTrigger 
                   value="sheets" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
-                  Google Sheets
+                  G. Sheets
                 </TabsTrigger>
                 <TabsTrigger 
                   value="manual" 
-                  className="rounded-none px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                  className="rounded-none flex-1 min-w-[100px] text-xs md:text-sm px-2 md:px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary"
                 >
                   Manual
                 </TabsTrigger>
               </TabsList>
               
-              <div className="p-6">
+              <div className="p-3 md:p-6 overflow-auto">
                 <TabsContent value="products">
                   <Suspense fallback={<LoadingComponent />}>
-                    <AdminProducts />
+                    <div className="overflow-x-auto">
+                      <AdminProducts />
+                    </div>
                   </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="users">
                   <Suspense fallback={<LoadingComponent />}>
-                    <AdminUsers />
+                    <div className="overflow-x-auto">
+                      <AdminUsers />
+                    </div>
                   </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="orders">
                   <Suspense fallback={<LoadingComponent />}>
-                    <AdminOrders />
+                    <div className="overflow-x-auto">
+                      <AdminOrders />
+                    </div>
                   </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="tools">
                   <Suspense fallback={<LoadingComponent />}>
-                    <AdminTools />
+                    <div className="overflow-x-auto">
+                      <AdminTools />
+                    </div>
                   </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="sheets">
                   <Suspense fallback={<LoadingComponent />}>
-                    <GoogleSheetsAdmin />
+                    <div className="overflow-x-auto">
+                      <GoogleSheetsAdmin />
+                    </div>
                   </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="manual">
                   <Suspense fallback={<LoadingComponent />}>
-                    <UserManual />
+                    <div className="overflow-auto max-h-[75vh]">
+                      <UserManual />
+                    </div>
                   </Suspense>
                 </TabsContent>
               </div>
