@@ -47,6 +47,17 @@ export default function Header() {
               
               <CoinBadge coins={user.coins} />
               
+              {/* My QRs button */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setLocation("/my-qrs")}
+                className="ml-2 p-1.5 text-xs hidden sm:flex"
+              >
+                <i className="fa-solid fa-ticket mr-1"></i>
+                Mis QRs
+              </Button>
+              
               {/* Admin button - for quick access to admin panel */}
               <Button 
                 variant="outline" 

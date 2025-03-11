@@ -46,7 +46,20 @@ export default function CartModal() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i className="fa-solid fa-shopping-cart text-gray-400 text-xl"></i>
               </div>
-              <p className="text-gray-600">Tu carrito está vacío</p>
+              <p className="text-gray-600 mb-2">Tu carrito está vacío</p>
+              <p className="text-sm text-gray-500 mb-4">Finaliza tu compra para obtener códigos QR de reclamación</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mx-auto"
+                onClick={() => {
+                  setShowCart(false);
+                  setLocation("/my-qrs");
+                }}
+              >
+                <i className="fa-solid fa-ticket mr-1.5"></i>
+                Ver Mis QRs
+              </Button>
             </div>
           ) : (
             <div className="space-y-4 mb-6">

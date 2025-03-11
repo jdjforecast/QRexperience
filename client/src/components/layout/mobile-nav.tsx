@@ -45,6 +45,17 @@ export default function MobileNav() {
             </span>
           )}
         </button>
+        
+        <button 
+          onClick={() => setLocation("/my-qrs")} 
+          className={cn(
+            "flex flex-col items-center text-sm",
+            location === "/my-qrs" ? "text-primary" : "text-gray-500"
+          )}
+        >
+          <i className="fa-solid fa-ticket text-xl mb-1"></i>
+          <span>Mis QRs</span>
+        </button>
       </div>
     </nav>
   );
