@@ -4,10 +4,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import AdminProducts from "./products";
-import AdminUsers from "./users";
-import AdminOrders from "./orders";
-import AdminTools from "./tools";
+
+// Importaciones dinámicas para evitar problemas de importación circular
+const AdminProducts = () => {
+  const ProductsComponent = require("./products").default;
+  return <ProductsComponent />;
+};
+
+const AdminUsers = () => {
+  const UsersComponent = require("./users").default;
+  return <UsersComponent />;
+};
+
+const AdminOrders = () => {
+  const OrdersComponent = require("./orders").default;
+  return <OrdersComponent />;
+};
+
+const AdminTools = () => {
+  const ToolsComponent = require("./tools").default;
+  return <ToolsComponent />;
+};
 
 export default function AdminDashboard() {
   const [location, setLocation] = useLocation();
