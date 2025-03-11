@@ -1,0 +1,8 @@
+name,category,price,description,imageUrl,qrCode,id,stock
+"Queso Fresco","Lácteos","30","Queso fresco artesanal, perfecto para ensaladas y sándwiches.","https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=200&fit=crop&crop=center","QRPROD001","1","98"
+"Ensalada Fresca","Frutas y Verduras","25","Mix de hojas verdes, tomate y aguacate, perfecto para acompañar tus comidas.","https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop&crop=center","QRPROD002","2","100"
+"Pizza Artesanal","Panadería","20","Pizza de masa fina elaborada con ingredientes frescos de primera calidad.","https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop&crop=center","QRPROD003","3","98"
+"Filete de Res","Carnes","45","Corte premium de res, ideal para asar a la parrilla.","https://images.unsplash.com/photo-1602014508516-dcfb08761ccf?w=300&h=200&fit=crop&crop=center","QRPROD004","4","100"
+"Agua Mineral","Bebidas","15","Agua mineral natural sin gas, refrescante y pura.","https://images.unsplash.com/photo-1564725073275-10240394e0f8?w=300&h=200&fit=crop&crop=center","QRPROD005","5","100"
+"Mix de Frutos Secos","Snacks","35","Mezcla de nueces, almendras y pasas. Snack saludable y energético.","https://images.unsplash.com/photo-1599599810694-b5b37304c041?w=300&h=200&fit=crop&crop=center","QRPROD006","6","100"
+"Teste","Electrónicos","100","Test del teste Loren ipsum","","PRODUCT_1741670202247_Teste","1","7"
