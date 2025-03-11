@@ -694,6 +694,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get orders" });
     }
   });
+  
+  // QR Scan Logs routes
+  app.post("/api/qr-scans", async (req: Request, res: Response) => {
+    try {
+      const scanLog = req.body;
+      const result = await storage.logQrScan(scanLog);
+      res.status(201).json(result);
+    } catch (error) {
+      console.error("Error al registrar escaneo QR:", error);
+      res.status(500).json({ success: false, message: "Error al registrar escaneo QR" });
+    }
+  });
+  
+  app.get("/api/qr-scans", async (req: Request, res: Response) => {
+    try {
+      const qrCode = req.query.qrCode as string | undefined;
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      
+      const logs = await storage.getQrScanLogs(qrCode, userId);
+      res.status(200).json(logs);
+    } catch (error) {
+      console.error("Error al obtener registros de escaneo QR:", error);
+      res.status(500).json({ success: false, message: "Error al obtener registros de escaneo QR" });
+    }
+  });
+  
+  app.get("/api/products/:id/scan-stats", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const stats = await storage.getProductScanStats(productId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error("Error al obtener estadísticas de escaneo para el producto:", error);
+      res.status(500).json({ success: false, message: "Error al obtener estadísticas de escaneo" });
+    }
+  });
+  
+  app.get("/api/products/:id/qr-code", async (req: Request, res: Response) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const qrCode = await storage.generateQrCodeForProduct(productId);
+      res.status(200).json({ qrCode });
+    } catch (error) {
+      console.error("Error al generar código QR para el producto:", error);
+      res.status(500).json({ success: false, message: "Error al generar código QR para el producto" });
+    }
+  });
 
   const httpServer = createServer(app);
   
