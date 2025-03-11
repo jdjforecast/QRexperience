@@ -1,0 +1,4 @@
+name,email,phone,company,password,coins,isAdmin,id
+"Administrador","admin@example.com","1234567890","Admin Company","admin123","1000","true","1"
+"Jaime","jdjfc@hotmail.com","1234567890","Admin Company","admin123","1000","true","2"
+"Jaime test","carro@teat.com","3005583193","Jejejend","50","3","false"

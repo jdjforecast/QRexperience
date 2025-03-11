@@ -3,42 +3,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowDown, BookOpen, Coffee, ShoppingCart, Users, QrCode, Settings, BarChart, Download, Eye } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function UserManual() {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-x-hidden">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Manual de Usuario</h1>
-        <p className="text-muted-foreground">Guía completa de todas las funcionalidades del sistema</p>
+        <h1 className="text-2xl md:text-3xl font-bold">Manual de Usuario</h1>
+        <p className="text-muted-foreground text-sm md:text-base">Guía completa de todas las funcionalidades del sistema</p>
       </div>
 
       <Tabs defaultValue="usuario" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="usuario">
-            <Users className="w-4 h-4 mr-2" />
-            Guía de Usuario
+        <TabsList className="mb-4 w-full flex flex-wrap">
+          <TabsTrigger value="usuario" className="flex-1 min-w-[140px] text-xs md:text-sm">
+            <Users className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="truncate">Guía de Usuario</span>
           </TabsTrigger>
-          <TabsTrigger value="admin">
-            <Settings className="w-4 h-4 mr-2" />
-            Guía de Administrador
+          <TabsTrigger value="admin" className="flex-1 min-w-[140px] text-xs md:text-sm">
+            <Settings className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="truncate">Guía de Administrador</span>
           </TabsTrigger>
-          <TabsTrigger value="tecnico">
-            <BookOpen className="w-4 h-4 mr-2" />
-            Documentación Técnica
+          <TabsTrigger value="tecnico" className="flex-1 min-w-[140px] text-xs md:text-sm">
+            <BookOpen className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <span className="truncate">Documentación Técnica</span>
           </TabsTrigger>
         </TabsList>
 
         {/* GUÍA DE USUARIO NORMAL */}
         <TabsContent value="usuario" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Introducción para Usuarios</CardTitle>
-              <CardDescription>
+          <Card className="overflow-hidden">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Introducción para Usuarios</CardTitle>
+              <CardDescription className="text-sm">
                 Bienvenido al sistema de compra virtual mediante códigos QR
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
+            <CardContent className="space-y-4 p-4 md:p-6 text-sm md:text-base">
+              <p className="break-words">
                 Este sistema te permite escanear códigos QR para ver productos, comprarlos con tus monedas virtuales 
                 y generar un recibo digital para reclamar tus productos físicamente. A continuación encontrarás 
                 todas las funciones disponibles para los usuarios.
@@ -46,12 +49,12 @@ export default function UserManual() {
 
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="registro">
-                  <AccordionTrigger className="font-medium">
+                  <AccordionTrigger className="font-medium text-sm md:text-base py-3">
                     Registro de Usuario
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-2">
+                  <AccordionContent className="space-y-2 text-xs md:text-sm">
                     <p>Para comenzar a usar el sistema, debes registrarte con tus datos personales:</p>
-                    <ol className="list-decimal ml-6 space-y-1">
+                    <ol className="list-decimal ml-4 md:ml-6 space-y-1">
                       <li>Accede a la opción "Registrarse" desde la pantalla de bienvenida</li>
                       <li>Completa el formulario con tu nombre, correo electrónico, teléfono y empresa</li>
                       <li>Al registrarte, recibirás automáticamente 100 monedas para realizar compras</li>
@@ -60,12 +63,12 @@ export default function UserManual() {
                 </AccordionItem>
 
                 <AccordionItem value="scanner">
-                  <AccordionTrigger className="font-medium">
+                  <AccordionTrigger className="font-medium text-sm md:text-base py-3">
                     Escaneo de Códigos QR
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-2">
+                  <AccordionContent className="space-y-2 text-xs md:text-sm">
                     <p>El sistema te permite escanear códigos QR de productos para ver su información y comprarlos:</p>
-                    <ol className="list-decimal ml-6 space-y-1">
+                    <ol className="list-decimal ml-4 md:ml-6 space-y-1">
                       <li>Desde la pantalla principal, pulsa el botón "Escanear Código QR"</li>
                       <li>Apunta la cámara de tu dispositivo hacia el código QR del producto</li>
                       <li>Al detectar el código, verás la información detallada del producto</li>
@@ -125,15 +128,15 @@ export default function UserManual() {
 
         {/* GUÍA DE ADMINISTRADOR */}
         <TabsContent value="admin" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Funciones de Administración</CardTitle>
-              <CardDescription>
+          <Card className="overflow-hidden">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Funciones de Administración</CardTitle>
+              <CardDescription className="text-sm">
                 Guía completa de las herramientas disponibles para los administradores
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
+            <CardContent className="space-y-4 p-4 md:p-6 text-sm md:text-base">
+              <p className="break-words">
                 Como administrador, tienes acceso a herramientas avanzadas para gestionar usuarios, productos, 
                 estadísticas del sistema y configuración de la tienda. A continuación se describen todas las 
                 funciones disponibles.
@@ -241,15 +244,15 @@ export default function UserManual() {
 
         {/* DOCUMENTACIÓN TÉCNICA */}
         <TabsContent value="tecnico" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentación Técnica</CardTitle>
-              <CardDescription>
+          <Card className="overflow-hidden">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-lg md:text-xl">Documentación Técnica</CardTitle>
+              <CardDescription className="text-sm">
                 Información técnica sobre la estructura y funcionamiento del sistema
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
+            <CardContent className="space-y-4 p-4 md:p-6 text-sm md:text-base">
+              <p className="break-words">
                 Esta sección proporciona información técnica sobre la arquitectura del sistema, modelos de datos 
                 y funcionalidades implementadas. Esta documentación es útil para desarrolladores y personal técnico.
               </p>
