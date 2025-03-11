@@ -24,11 +24,38 @@ export default function Scanner() {
     };
   }, []);
   
-  const handleScan = async (qrCode: string) => {
+  const handleScan = async (
+    qrCode: string,
+    locationData?: { latitude: number, longitude: number } | null,
+    deviceInfo?: Record<string, any> | null
+  ) => {
     if (!mounted) return;
     
     try {
+      // Llamar API para registrar el escaneo QR
+      try {
+        // Registrar escaneo en el sistema
+        await fetch('/api/qr-scans', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            qrCode,
+            latitude: locationData?.latitude,
+            longitude: locationData?.longitude,
+            deviceInfo: deviceInfo ? JSON.stringify(deviceInfo) : null,
+            scanContext: 'scanner_page'
+          })
+        });
+        console.log('QR scan logged successfully');
+      } catch (logError) {
+        console.error('Error logging QR scan:', logError);
+      }
+      
+      // Intentar obtener el producto y agregarlo al carrito
       const product = await scanQRCode(qrCode);
+      
       if (product) {
         setSelectedProduct(product);
         

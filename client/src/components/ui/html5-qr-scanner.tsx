@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface QRScannerProps {
-  onScan: (qrCode: string) => void;
+  onScan: (
+    qrCode: string, 
+    locationData?: { latitude: number, longitude: number } | null, 
+    deviceInfo?: Record<string, any> | null
+  ) => void;
   onError: (error: string) => void;
   onClose: () => void;
 }
@@ -36,14 +40,29 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
       navigator.vibrate(200);
     }
     
+    // Simular información del dispositivo
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      simulated: true
+    };
+    
+    // Simular ubicación (coordenadas de Madrid, España)
+    const simulatedLocation = {
+      latitude: 40.416775,
+      longitude: -3.703790
+    };
+    
     setTimeout(() => {
       setScanSuccess(false);
-      onScan(qrCode);
+      onScan(qrCode, simulatedLocation, deviceInfo);
     }, 1000);
   };
 
   // Maneja un escaneo exitoso
-  const handleSuccessfulScan = (qrCode: string) => {
+  const handleSuccessfulScan = async (qrCode: string) => {
     // Evitar escaneos múltiples
     if (scanSuccess) return;
     
@@ -54,11 +73,42 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
     if (navigator.vibrate) {
       navigator.vibrate(200);
     }
+
+    // Obtener geolocalización si está disponible
+    let locationData = null;
+    try {
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          });
+        });
+        
+        locationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        console.log("Geolocalización capturada:", locationData);
+      }
+    } catch (err) {
+      console.warn("No se pudo obtener la geolocalización:", err);
+    }
+    
+    // Obtener información del dispositivo
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height
+    };
     
     // Detener el escaneo y notificar después de un momento
     stopScanning();
     setTimeout(() => {
-      onScan(qrCode);
+      // Pasar el código QR y los datos adicionales
+      onScan(qrCode, locationData, deviceInfo);
     }, 1000);
   };
   
@@ -210,6 +260,62 @@ export default function HTML5QrScanner({ onScan, onError, onClose }: QRScannerPr
               </div>
               <p className="mb-2 font-medium text-white/90">Escaneo de códigos QR</p>
               <p className="text-sm text-white/60 px-4 max-w-xs">Haz clic en "Iniciar Escáner" para usar la cámara</p>
+            </div>
+          )}
+          
+          {/* Elementos visuales cuando está escaneando */}
+          {isScanning && (
+            <div className="absolute inset-0 pointer-events-none z-20">
+              {/* Marco de enfoque animado */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="relative">
+                  {/* Marco de enfoque */}
+                  <div className="w-56 h-56 border-2 border-white/80 rounded-lg flex items-center justify-center relative overflow-hidden">
+                    {/* Línea de escaneo animada */}
+                    <div className="absolute top-0 w-full h-0.5 bg-primary/80 animate-[scanLine_2s_ease-in-out_infinite]"></div>
+                    
+                    {/* Esquinas decorativas del marco */}
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg"></div>
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg"></div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg"></div>
+                    
+                    <div className="text-white/80 text-sm text-center max-w-[90%] bg-black/40 px-3 py-1 rounded backdrop-blur-sm">
+                      <p>Alinea el código QR en este marco</p>
+                    </div>
+                  </div>
+                  
+                  {/* Efectos de pulso */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 border border-primary/30 rounded-lg animate-[pulse_2s_ease-in-out_infinite]"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-primary/20 rounded-lg animate-[pulse_2s_ease-in-out_0.5s_infinite]"></div>
+                </div>
+              </div>
+              
+              {/* Barra de estado inferior */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-primary/90 to-primary/70 text-white py-2 px-4 text-center text-sm">
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Escaneando...
+                </span>
+              </div>
+            </div>
+          )}
+          
+          {/* Animación cuando se detecta un código QR */}
+          {scanSuccess && (
+            <div className="absolute inset-0 z-30 bg-black/20 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white rounded-lg p-4 shadow-lg transform scale-in-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-center text-gray-800 font-medium">¡Código QR detectado!</p>
+                <p className="text-center text-gray-500 text-sm">Agregando producto al carrito...</p>
+              </div>
             </div>
           )}
         </div>
