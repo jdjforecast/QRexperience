@@ -49,7 +49,8 @@ export default function AdminUsers() {
   const filteredUsers = users.filter((user: User) => {
     return user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           user.phone.toLowerCase().includes(searchTerm.toLowerCase());
+           user.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           user.company.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   // Abrir modal para ajustar monedas
@@ -97,7 +98,7 @@ export default function AdminUsers() {
             <Label htmlFor="search-user">Buscar:</Label>
             <Input 
               id="search-user"
-              placeholder="Buscar por nombre, email o teléfono" 
+              placeholder="Buscar por nombre, email, teléfono o empresa" 
               value={searchTerm} 
               onChange={(e) => setSearchTerm(e.target.value)} 
             />
@@ -117,6 +118,7 @@ export default function AdminUsers() {
                   <th className="p-4 font-medium">Nombre</th>
                   <th className="p-4 font-medium">Email</th>
                   <th className="p-4 font-medium">Teléfono</th>
+                  <th className="p-4 font-medium">Empresa</th>
                   <th className="p-4 font-medium">Monedas</th>
                   <th className="p-4 font-medium">Admin</th>
                   <th className="p-4 font-medium">Acciones</th>
@@ -128,6 +130,7 @@ export default function AdminUsers() {
                     <td className="p-4">{user.name}</td>
                     <td className="p-4">{user.email}</td>
                     <td className="p-4">{user.phone}</td>
+                    <td className="p-4">{user.company}</td>
                     <td className="p-4">
                       <Badge className="bg-primary">{user.coins} monedas</Badge>
                     </td>
@@ -159,7 +162,7 @@ export default function AdminUsers() {
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-4 text-center text-gray-500">
+                    <td colSpan={7} className="p-4 text-center text-gray-500">
                       No se encontraron usuarios
                     </td>
                   </tr>
