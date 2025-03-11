@@ -62,6 +62,16 @@ Para procesar pagos en producción con Stripe:
 - **Certificado SSL**: Asegúrate de que tu dominio tiene un certificado SSL válido (Vercel y Netlify lo proporcionan automáticamente)
 - **Modo PWA**: Considera habilitar funcionalidades de Progressive Web App para mejorar la experiencia en móviles
 
+## Diferencias entre desarrollo y producción
+
+Cuando la aplicación se ejecuta en producción, hay algunas diferencias importantes a tener en cuenta:
+
+1. **Formato de módulos**: En producción se utiliza ESM (ECMAScript Modules) en lugar de CommonJS para aprovechar las últimas características de JavaScript.
+2. **Procesamiento de assets**: Los nombres de archivos contienen hashes para prevenir problemas de caché.
+3. **Compresión**: Los archivos son minificados y optimizados para un rendimiento óptimo.
+4. **Variables de entorno**: Las variables de entorno prefijadas con `VITE_` estarán disponibles en el frontend a través de `import.meta.env`.
+5. **Manejo de errores**: En producción, los errores no mostrarán información detallada al usuario final, por lo que es importante revisar los logs del servidor.
+
 ## Solución de problemas comunes
 
 - **Error de cámara**: Si los usuarios no pueden acceder a la cámara, verifica que:
@@ -73,3 +83,14 @@ Para procesar pagos en producción con Stripe:
   1. Verifica las claves de API de Stripe
   2. Comprueba que la moneda y configuración regional es correcta
   3. Revisa los logs de Stripe para identificar errores específicos
+
+- **Error "Cannot resolve module 'index.html"**: Si el proceso de build falla con este error:
+  1. Asegúrate de que la configuración de Vite tenga correctamente definido el `root` (donde se encuentra index.html)
+  2. Define explícitamente la ruta del `input` en las opciones de rollup: `input: path.resolve(__dirname, "client/index.html")`
+  3. Asegúrate de que el directorio de salida `outDir` sea coherente entre los archivos de configuración
+  4. Verifica que el archivo `index.html` exista y tenga los permisos correctos
+  
+- **Errores de ruta en el frontend después del despliegue**: 
+  1. Revisa las reglas de redirección en los archivos de configuración (netlify.toml o vercel.json)
+  2. Asegúrate de que todas las rutas del frontend apunten a index.html
+  3. Verifica que las rutas de API tengan el prefijo correcto definido

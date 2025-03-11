@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +17,9 @@ export default defineConfig({
     // Specify ESM for Netlify to support top-level await
     target: 'esnext',
     rollupOptions: {
-      input: resolve(__dirname, 'client/index.html'), // Ruta explícita al index.html
+      input: {
+        main: path.resolve(__dirname, 'client/index.html') // Ruta explícita al index.html con un nombre de entrada
+      },
       output: {
         format: 'esm',
         entryFileNames: 'assets/[name].[hash].js',
