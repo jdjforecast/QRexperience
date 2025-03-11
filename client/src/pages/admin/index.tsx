@@ -1,30 +1,23 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-// Importaciones dinámicas para evitar problemas de importación circular
-const AdminProducts = () => {
-  const ProductsComponent = require("./products").default;
-  return <ProductsComponent />;
-};
+// Importaciones con lazy loading para evitar problemas circulares
+const AdminProducts = lazy(() => import("./products"));
+const AdminUsers = lazy(() => import("./users"));
+const AdminOrders = lazy(() => import("./orders"));
+const AdminTools = lazy(() => import("./tools"));
 
-const AdminUsers = () => {
-  const UsersComponent = require("./users").default;
-  return <UsersComponent />;
-};
-
-const AdminOrders = () => {
-  const OrdersComponent = require("./orders").default;
-  return <OrdersComponent />;
-};
-
-const AdminTools = () => {
-  const ToolsComponent = require("./tools").default;
-  return <ToolsComponent />;
-};
+// Componente para el estado de carga
+const LoadingComponent = () => (
+  <div className="flex justify-center items-center p-12">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+    <span className="ml-3">Cargando...</span>
+  </div>
+);
 
 export default function AdminDashboard() {
   const [location, setLocation] = useLocation();
@@ -96,19 +89,27 @@ export default function AdminDashboard() {
               
               <div className="p-6">
                 <TabsContent value="products">
-                  <AdminProducts />
+                  <Suspense fallback={<LoadingComponent />}>
+                    <AdminProducts />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="users">
-                  <AdminUsers />
+                  <Suspense fallback={<LoadingComponent />}>
+                    <AdminUsers />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="orders">
-                  <AdminOrders />
+                  <Suspense fallback={<LoadingComponent />}>
+                    <AdminOrders />
+                  </Suspense>
                 </TabsContent>
                 
                 <TabsContent value="tools">
-                  <AdminTools />
+                  <Suspense fallback={<LoadingComponent />}>
+                    <AdminTools />
+                  </Suspense>
                 </TabsContent>
               </div>
             </Tabs>
