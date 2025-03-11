@@ -7,6 +7,8 @@ import {
   getGoogleConfig,
   saveGoogleSheetsConfig,
   saveGoogleDriveConfig,
+  saveSimpleGoogleSheetsConfig,
+  saveSimpleGoogleDriveConfig,
   getSyncStats,
   GoogleSheetsConfig,
   GoogleDriveConfig
@@ -426,6 +428,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedConfig);
     } catch (error) {
       res.status(500).json({ message: "Failed to save Google Drive configuration" });
+    }
+  });
+  
+  // Save Simple Google Sheets configuration (solo URL)
+  app.post("/api/admin/simple-google-sheets-config", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
+      }
+      const updatedConfig = await saveSimpleGoogleSheetsConfig(url);
+      res.json(updatedConfig);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to save simple Google Sheets configuration" });
+    }
+  });
+  
+  // Save Simple Google Drive configuration (solo URL)
+  app.post("/api/admin/simple-google-drive-config", checkAdminAccess, async (req: Request, res: Response) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ message: "URL is required" });
+      }
+      const updatedConfig = await saveSimpleGoogleDriveConfig(url);
+      res.json(updatedConfig);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to save simple Google Drive configuration" });
     }
   });
   

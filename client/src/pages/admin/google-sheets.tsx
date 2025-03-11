@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,23 +10,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { Switch } from "@/components/ui/switch";
 
 interface GoogleSheetsConfig {
   spreadsheetId: string;
   clientEmail: string;
   privateKey: string;
+  spreadsheetUrl?: string;
 }
 
 interface GoogleDriveConfig {
   folderId: string;
   clientEmail: string;
   privateKey: string;
+  folderUrl?: string;
+}
+
+interface GoogleConfig {
+  sheets?: GoogleSheetsConfig;
+  drive?: GoogleDriveConfig;
+  connected: boolean;
+  simpleMode: boolean;
 }
 
 export default function GoogleSheetsAdmin() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
   const [configTab, setConfigTab] = useState("sheets");
+  const [simpleMode, setSimpleMode] = useState(true);
+  const [simpleSheetsUrl, setSimpleSheetsUrl] = useState('');
+  const [simpleDriveUrl, setSimpleDriveUrl] = useState('');
   const [sheetsConfig, setSheetsConfig] = useState<GoogleSheetsConfig>({
     spreadsheetId: '',
     clientEmail: '',
@@ -38,6 +51,36 @@ export default function GoogleSheetsAdmin() {
     privateKey: ''
   });
   const { toast } = useToast();
+  
+  // Consulta para obtener la configuración actual
+  const { data: googleConfig } = useQuery({
+    queryKey: ['/api/admin/google-config'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/admin/google-config');
+      return res.json() as Promise<GoogleConfig>;
+    }
+  });
+  
+  // Efecto para cargar la configuración actual
+  useEffect(() => {
+    if (googleConfig) {
+      setSimpleMode(googleConfig.simpleMode);
+      
+      if (googleConfig.sheets) {
+        setSheetsConfig(googleConfig.sheets);
+        if (googleConfig.sheets.spreadsheetUrl) {
+          setSimpleSheetsUrl(googleConfig.sheets.spreadsheetUrl);
+        }
+      }
+      
+      if (googleConfig.drive) {
+        setDriveConfig(googleConfig.drive);
+        if (googleConfig.drive.folderUrl) {
+          setSimpleDriveUrl(googleConfig.drive.folderUrl);
+        }
+      }
+    }
+  }, [googleConfig]);
   
   // Mutación para guardar configuración de Google Sheets
   const saveSheetsMutation = useMutation({
@@ -71,11 +114,59 @@ export default function GoogleSheetsAdmin() {
         title: "Configuración guardada",
         description: "La configuración de Google Drive ha sido guardada exitosamente.",
       });
+      // Recargar la configuración
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/google-config'] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "No se pudo guardar la configuración.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutación para guardar configuración simple de Google Sheets
+  const saveSimpleSheetsMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const res = await apiRequest('POST', '/api/admin/simple-google-sheets-config', { url });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuración guardada",
+        description: "La configuración simple de Google Sheets ha sido guardada exitosamente.",
+      });
+      // Recargar la configuración
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/google-config'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la configuración simple.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutación para guardar configuración simple de Google Drive
+  const saveSimpleDriveMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const res = await apiRequest('POST', '/api/admin/simple-google-drive-config', { url });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuración guardada",
+        description: "La configuración simple de Google Drive ha sido guardada exitosamente.",
+      });
+      // Recargar la configuración
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/google-config'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la configuración simple.",
         variant: "destructive",
       });
     }
